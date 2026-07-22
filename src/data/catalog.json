@@ -18,6 +18,8 @@
     ],
     "completitud": 100,
     "estado": "produccion",
+    "resumen_proposito": "Estima la probabilidad de incumplimiento a 12 meses de una PYME que solicita un crédito de admisión. Alimenta la decisión de aprobación y la asignación de línea. **No** debe usarse para clientes ya vigentes ni para productos distintos a admisión.",
+    "resumen_como_funciona": "La población de solicitudes se cruza con matrices de buró y ventas, se construyen features (endeudamiento, comportamiento de pago, actividad comercial) y un Gradient Boosting sobre Spark produce un score 0–1. El score se segmenta en deciles de riesgo para la política de aprobación.",
     "actualizado": "2026-07-22T01:15:30Z",
     "creado": "2026-07-22T00:38:57Z",
     "historial": [
@@ -78,6 +80,8 @@
     ],
     "completitud": 33,
     "estado": "desarrollo",
+    "resumen_proposito": "Predice qué clientes de tarjeta de crédito tienen mayor probabilidad de abandonar el producto en los próximos meses, para accionar campañas de retención.",
+    "resumen_como_funciona": null,
     "actualizado": "2026-07-22T01:15:32Z",
     "creado": "2026-07-22T00:39:06Z",
     "historial": [
@@ -122,6 +126,8 @@
     "docs_presentes": [],
     "completitud": 0,
     "estado": "nuevo",
+    "resumen_proposito": null,
+    "resumen_como_funciona": null,
     "actualizado": "2026-07-22T00:58:43Z",
     "creado": "2026-07-22T00:58:38Z",
     "historial": [

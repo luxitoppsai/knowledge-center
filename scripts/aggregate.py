@@ -147,6 +147,36 @@ def _parse_yaml_simple(txt: str) -> dict:
     return out
 
 
+#: Secciones narrativas del Model Card que sirven de "resumen del proyecto" en el detalle.
+_SECCIONES_RESUMEN = {
+    "proposito": "Propósito y uso previsto",
+    "como_funciona": "Cómo funciona",
+}
+
+
+def extraer_resumen(model_card_md: str | None) -> dict[str, str | None]:
+    """Extrae las secciones narrativas del ``model-card.md`` para el resumen del detalle.
+
+    No inventa nada: lee texto que ya escribió la skill de autodoc (humano o agente). Si la sección
+    quedó con el marcador ``Por completar`` (aún no se generó la narrativa), devuelve ``None`` para
+    que el detalle lo indique en vez de mostrar el placeholder crudo.
+
+    :param model_card_md: Contenido de ``docs/model-card.md``, o ``None`` si el repo no lo tiene.
+    :returns: ``{"proposito": texto|None, "como_funciona": texto|None}``.
+    """
+    resumen: dict[str, str | None] = {k: None for k in _SECCIONES_RESUMEN}
+    if not model_card_md:
+        return resumen
+    for clave, titulo in _SECCIONES_RESUMEN.items():
+        m = re.search(rf"## {re.escape(titulo)}\n\n(.+?)(?=\n## |\Z)", model_card_md, re.S)
+        if not m:
+            continue
+        texto = m.group(1).strip()
+        if texto and "Por completar" not in texto:
+            resumen[clave] = texto
+    return resumen
+
+
 def _auc(meta: dict) -> float | None:
     for m in meta.get("models", []) or []:
         for ev in (((m.get("metrics") or {}).get("test") or {}).get("evaluation_metrics_data") or []):
@@ -164,11 +194,14 @@ def procesar(repo: dict) -> dict:
     destino = DOCS / slug
     destino.mkdir(parents=True, exist_ok=True)
     presentes = []
+    model_card_md = None
     for nombre in listar_docs(full):
         contenido = bajar(full, f"docs/{nombre}")
         if contenido:
             (destino / nombre).write_text(contenido, encoding="utf-8")
             presentes.append(Path(nombre).stem)
+            if nombre == "model-card.md":
+                model_card_md = contenido
 
     # metadata
     py = _parse_yaml_simple(bajar(full, "project.yaml") or "")
@@ -181,6 +214,7 @@ def procesar(repo: dict) -> dict:
     con_release = tiene_release(full)
     estado = "produccion" if con_release else ("desarrollo" if presentes else "nuevo")
     eventos = historial(full)
+    resumen = extraer_resumen(model_card_md)
 
     # categoría para el sidebar de Docusaurus
     (destino / "_category_.json").write_text(
@@ -203,6 +237,8 @@ def procesar(repo: dict) -> dict:
         "docs_presentes": presentes,
         "completitud": completitud,
         "estado": estado,
+        "resumen_proposito": resumen["proposito"],
+        "resumen_como_funciona": resumen["como_funciona"],
         "actualizado": repo.get("pushed_at"),
         "creado": repo.get("created_at"),
         "historial": eventos,

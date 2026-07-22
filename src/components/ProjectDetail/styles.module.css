@@ -26,6 +26,21 @@
 }
 .btnGhost:hover { border-color: var(--kc-cyan); color: var(--kc-cyan); text-decoration: none; }
 
+.summary {
+  background: var(--kc-surface); border: 1px solid var(--kc-border); border-radius: 16px;
+  padding: 1.5rem 1.6rem; margin-bottom: 1.6rem; box-shadow: var(--kc-shadow);
+}
+.summaryTitle { font-size: 1.05rem; margin: 0 0 0.8rem; }
+.summarySubTitle {
+  font-size: 0.85rem; color: var(--kc-muted); margin: 1rem 0 0.4rem;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.summaryText { font-size: 0.96rem; line-height: 1.6; color: var(--kc-ink); margin: 0; }
+.summaryEmpty { font-size: 0.9rem; line-height: 1.6; color: var(--kc-muted); margin: 0; }
+.summaryEmpty code {
+  background: var(--kc-chip-bg); color: var(--kc-cyan); padding: 0.1rem 0.4rem; border-radius: 6px;
+}
+
 .metrics {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.8rem; margin-bottom: 2rem;

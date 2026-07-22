@@ -9,6 +9,19 @@ const ESTADOS = {
   nuevo: {label: 'Nuevo', cls: styles.dotSlate},
 };
 
+/**
+ * Renderiza markdown inline mínimo (**negrita**, `código`) sin traer una librería de markdown
+ * completa — la narrativa del Model Card solo usa estos dos, generados por la plantilla/skill.
+ */
+function renderInlineMd(texto) {
+  const partes = texto.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean);
+  return partes.map((p, i) => {
+    if (p.startsWith('**') && p.endsWith('**')) return <strong key={i}>{p.slice(2, -2)}</strong>;
+    if (p.startsWith('`') && p.endsWith('`')) return <code key={i}>{p.slice(1, -1)}</code>;
+    return p;
+  });
+}
+
 function fmtFecha(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('es-PE', {year: 'numeric', month: 'short', day: 'numeric'});
@@ -94,6 +107,28 @@ export default function ProjectDetail({project: p}) {
             </a>
           </div>
         </header>
+
+        <section className={styles.summary}>
+          <h2 className={styles.summaryTitle}>¿Qué es este proyecto?</h2>
+          {p.resumen_proposito || p.resumen_como_funciona ? (
+            <>
+              {p.resumen_proposito && (
+                <p className={styles.summaryText}>{renderInlineMd(p.resumen_proposito)}</p>
+              )}
+              {p.resumen_como_funciona && (
+                <>
+                  <h3 className={styles.summarySubTitle}>Cómo funciona</h3>
+                  <p className={styles.summaryText}>{renderInlineMd(p.resumen_como_funciona)}</p>
+                </>
+              )}
+            </>
+          ) : (
+            <p className={styles.summaryEmpty}>
+              Este proyecto todavía no tiene una narrativa documentada. Corré la skill de autodoc
+              (<code>/generar-model-card</code>) en el repo para completar propósito y funcionamiento.
+            </p>
+          )}
+        </section>
 
         <section className={styles.metrics}>
           <Metric label="algoritmo" value={p.algoritmo} />
