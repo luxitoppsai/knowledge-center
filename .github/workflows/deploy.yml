@@ -34,7 +34,9 @@ jobs:
 
       - name: Agregar catálogo (vista computada)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # El GITHUB_TOKEN por defecto de Actions solo alcanza al propio repo; para descubrir
+          # y leer TODOS los repos kc-* de la cuenta hace falta un PAT con scope de lectura.
+          GITHUB_TOKEN: ${{ secrets.KC_READ_TOKEN }}
           KC_OWNER: luxitoppsai
           KC_PREFIX: "kc-"
         run: python scripts/aggregate.py
