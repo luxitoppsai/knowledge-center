@@ -38,5 +38,22 @@
     "completitud": 33,
     "estado": "desarrollo",
     "actualizado": "2026-07-22T00:39:13Z"
+  },
+  {
+    "slug": "deteccion-de-fraude-tarjetas",
+    "nombre": "Deteccion de Fraude Tarjetas",
+    "area": "an_fraude",
+    "tipo_modelo": "clasificacion",
+    "repo_url": "https://github.com/luxitoppsai/kc-deteccion-de-fraude-tarjetas",
+    "doc_url": null,
+    "algoritmo": "GradientBoosting",
+    "flavour": "sklearn",
+    "features": 3,
+    "auc": 0.8,
+    "n_tablas": 1,
+    "docs_presentes": [],
+    "completitud": 0,
+    "estado": "nuevo",
+    "actualizado": "2026-07-22T00:58:43Z"
   }
 ]
