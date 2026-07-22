@@ -31,7 +31,7 @@ function Chip({k, v}) {
 
 function Card({p}) {
   const est = ESTADOS[p.estado] || ESTADOS.nuevo;
-  const docHref = useBaseUrl(p.doc_url || '/docs/intro');
+  const detalleHref = useBaseUrl(`/proyecto/${p.slug}`);
   return (
     <article className={styles.card}>
       <div className={styles.cardTop}>
@@ -39,7 +39,9 @@ function Card({p}) {
         <span className={styles.estado}>{est.label}</span>
         <span className={styles.area}>{p.area}</span>
       </div>
-      <h3 className={styles.cardTitle}>{p.nombre}</h3>
+      <h3 className={styles.cardTitle}>
+        <a href={detalleHref} className={styles.cardTitleLink}>{p.nombre}</a>
+      </h3>
 
       <div className={styles.completeness}>
         <div className={styles.compBar}>
@@ -56,7 +58,7 @@ function Card({p}) {
       </div>
 
       <div className={styles.links}>
-        <a className={styles.btnPrimary} href={docHref}>Ver documentación →</a>
+        <a className={styles.btnPrimary} href={detalleHref}>Ver detalle →</a>
         <a className={styles.btnGhost} href={p.repo_url} target="_blank" rel="noopener">Repo ↗</a>
       </div>
     </article>

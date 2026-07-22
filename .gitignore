@@ -9,3 +9,4 @@ npm-debug.log*
 # (catalog.json SÍ se versiona con un placeholder vacío, para que el sitio compile sin agregación)
 docs/*/
 !docs/intro.md
+.memory/

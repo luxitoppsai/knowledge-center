@@ -19,6 +19,7 @@ const config = {
 
   markdown: {mermaid: true, hooks: {onBrokenMarkdownLinks: 'warn'}},
   themes: ['@docusaurus/theme-mermaid'],
+  plugins: ['./plugins/project-pages'],
 
   presets: [
     [

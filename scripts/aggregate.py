@@ -95,6 +95,47 @@ def tiene_release(full_name: str) -> bool:
     )
 
 
+def historial(full_name: str) -> list[dict]:
+    """Deriva la línea de tiempo del proyecto de señales que GitHub ya guarda (sin snapshots
+    propios): commits que tocaron ``docs/`` (progreso de documentación) + tags/releases (hitos de
+    madurez). Se combinan y ordenan por fecha, más reciente primero.
+
+    :param full_name: ``owner/repo``.
+    :returns: Lista de eventos ``{fecha, tipo, detalle, url}``.
+    """
+    eventos: list[dict] = []
+
+    r = _get(f"{API}/repos/{full_name}/commits", params={"path": "docs", "per_page": 15})
+    if r.status_code == 200:
+        for c in r.json():
+            msg = (c.get("commit") or {}).get("message", "").splitlines()[0]
+            fecha = (((c.get("commit") or {}).get("committer") or {}).get("date"))
+            if fecha:
+                eventos.append({
+                    "fecha": fecha, "tipo": "doc",
+                    "detalle": msg[:90], "url": c.get("html_url"),
+                })
+
+    r = _get(f"{API}/repos/{full_name}/tags", params={"per_page": 10})
+    if r.status_code == 200:
+        for t in r.json():
+            sha = (t.get("commit") or {}).get("sha")
+            fecha = None
+            if sha:
+                rc = _get(f"{API}/repos/{full_name}/commits/{sha}")
+                if rc.status_code == 200:
+                    fecha = (((rc.json().get("commit") or {}).get("committer") or {}).get("date"))
+            if fecha:
+                eventos.append({
+                    "fecha": fecha, "tipo": "release",
+                    "detalle": f"Tag {t.get('name')}",
+                    "url": f"https://github.com/{full_name}/releases/tag/{t.get('name')}",
+                })
+
+    eventos.sort(key=lambda e: e["fecha"], reverse=True)
+    return eventos
+
+
 def _parse_yaml_simple(txt: str) -> dict:
     """Parser mínimo de ``clave: "valor"`` (evita dependencia de PyYAML en CI)."""
     out = {}
@@ -139,6 +180,7 @@ def procesar(repo: dict) -> dict:
     completitud = round(100 * len(completos) / len(DOCS_ESPERADOS))
     con_release = tiene_release(full)
     estado = "produccion" if con_release else ("desarrollo" if presentes else "nuevo")
+    eventos = historial(full)
 
     # categoría para el sidebar de Docusaurus
     (destino / "_category_.json").write_text(
@@ -162,6 +204,13 @@ def procesar(repo: dict) -> dict:
         "completitud": completitud,
         "estado": estado,
         "actualizado": repo.get("pushed_at"),
+        "creado": repo.get("created_at"),
+        "historial": eventos,
+        "docs_esperados": DOCS_ESPERADOS,
+        "sources": {
+            "dataset_info": (meta.get("sources") or {}).get("dataset_info") or {},
+            "table_list": (meta.get("sources") or {}).get("table_list") or [],
+        },
     }
 
 

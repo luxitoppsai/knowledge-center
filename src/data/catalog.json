@@ -18,7 +18,48 @@
     ],
     "completitud": 100,
     "estado": "produccion",
-    "actualizado": "2026-07-22T00:39:15Z"
+    "actualizado": "2026-07-22T01:15:30Z",
+    "creado": "2026-07-22T00:38:57Z",
+    "historial": [
+      {
+        "fecha": "2026-07-22T00:38:55Z",
+        "tipo": "doc",
+        "detalle": "chore: repo de proyecto desde template (scoring-admision-pyme) + docs autogenerados",
+        "url": "https://github.com/luxitoppsai/kc-scoring-admision-pyme/commit/b7d1e4b0903f78f02b87c4a023cdb58a05feb6f5"
+      },
+      {
+        "fecha": "2026-07-22T00:38:55Z",
+        "tipo": "release",
+        "detalle": "Tag v1.0.0",
+        "url": "https://github.com/luxitoppsai/kc-scoring-admision-pyme/releases/tag/v1.0.0"
+      }
+    ],
+    "docs_esperados": [
+      "model-card",
+      "lineage",
+      "functions"
+    ],
+    "sources": {
+      "dataset_info": {
+        "catalog.riesgos.hm_solicitud_credito": [
+          "antiguedad_negocio_meses",
+          "flg_mora_previa"
+        ],
+        "catalog.buro.hm_reporte_deudas": [
+          "ratio_endeudamiento",
+          "n_entidades_sistema",
+          "score_buro"
+        ],
+        "catalog.core.hm_ventas": [
+          "ventas_prom_u6m"
+        ]
+      },
+      "table_list": [
+        "catalog.riesgos.hm_solicitud_credito",
+        "catalog.buro.hm_reporte_deudas",
+        "catalog.core.hm_ventas"
+      ]
+    }
   },
   {
     "slug": "churn-de-tarjetas",
@@ -37,7 +78,34 @@
     ],
     "completitud": 33,
     "estado": "desarrollo",
-    "actualizado": "2026-07-22T00:39:13Z"
+    "actualizado": "2026-07-22T01:15:32Z",
+    "creado": "2026-07-22T00:39:06Z",
+    "historial": [
+      {
+        "fecha": "2026-07-22T00:39:05Z",
+        "tipo": "doc",
+        "detalle": "chore: repo de proyecto desde template (churn-de-tarjetas) + docs autogenerados",
+        "url": "https://github.com/luxitoppsai/kc-churn-de-tarjetas/commit/20125cc8c6415cb99af7a152adfcaf3951dfeada"
+      }
+    ],
+    "docs_esperados": [
+      "model-card",
+      "lineage",
+      "functions"
+    ],
+    "sources": {
+      "dataset_info": {
+        "catalog.tarjetas.hm_consumo": [
+          "consumo_prom_u3m",
+          "n_transacciones_u1m",
+          "dias_ult_uso"
+        ]
+      },
+      "table_list": [
+        "catalog.tarjetas.hm_consumo",
+        "catalog.tarjetas.hm_reclamos"
+      ]
+    }
   },
   {
     "slug": "deteccion-de-fraude-tarjetas",
@@ -54,6 +122,31 @@
     "docs_presentes": [],
     "completitud": 0,
     "estado": "nuevo",
-    "actualizado": "2026-07-22T00:58:43Z"
+    "actualizado": "2026-07-22T00:58:43Z",
+    "creado": "2026-07-22T00:58:38Z",
+    "historial": [
+      {
+        "fecha": "2026-07-22T00:58:37Z",
+        "tipo": "doc",
+        "detalle": "chore: repo inicial (deteccion-de-fraude-tarjetas) via dispatcher",
+        "url": "https://github.com/luxitoppsai/kc-deteccion-de-fraude-tarjetas/commit/7ad85e8e08f0bb742f3446ed4765f7dbae4bcc54"
+      }
+    ],
+    "docs_esperados": [
+      "model-card",
+      "lineage",
+      "functions"
+    ],
+    "sources": {
+      "dataset_info": {
+        "catalog.esquema.tabla_ejemplo": [
+          "feature_a",
+          "feature_b"
+        ]
+      },
+      "table_list": [
+        "catalog.esquema.tabla_ejemplo"
+      ]
+    }
   }
 ]

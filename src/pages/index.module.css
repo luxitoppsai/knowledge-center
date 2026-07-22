@@ -71,6 +71,8 @@
 .estado { color: var(--kc-ink); font-weight: 600; }
 .area { margin-left: auto; color: var(--kc-muted); font-family: var(--ifm-font-family-monospace); }
 .cardTitle { margin: 0.6rem 0 0.9rem; font-size: 1.22rem; letter-spacing: -0.01em; }
+.cardTitleLink { color: var(--kc-ink); text-decoration: none; }
+.cardTitleLink:hover { color: var(--kc-cyan); text-decoration: none; }
 
 .completeness { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.9rem; }
 .compBar {

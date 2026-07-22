@@ -1,0 +1,134 @@
+import React from 'react';
+import Layout from '@theme/Layout';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import styles from './styles.module.css';
+
+const ESTADOS = {
+  produccion: {label: 'Producción', cls: styles.dotGreen},
+  desarrollo: {label: 'Desarrollo', cls: styles.dotAmber},
+  nuevo: {label: 'Nuevo', cls: styles.dotSlate},
+};
+
+function fmtFecha(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('es-PE', {year: 'numeric', month: 'short', day: 'numeric'});
+}
+
+function Metric({label, value}) {
+  if (value === null || value === undefined) return null;
+  return (
+    <div className={styles.metric}>
+      <div className={styles.metricValue}>{value}</div>
+      <div className={styles.metricLabel}>{label}</div>
+    </div>
+  );
+}
+
+function DocCheck({slug, esperado, presente}) {
+  return (
+    <li className={presente ? styles.docOk : styles.docMissing}>
+      <span className={styles.docIcon}>{presente ? '✓' : '○'}</span>
+      {esperado}
+    </li>
+  );
+}
+
+function TimelineItem({e}) {
+  const esRelease = e.tipo === 'release';
+  return (
+    <li className={styles.tlItem}>
+      <span className={`${styles.tlDot} ${esRelease ? styles.tlDotRelease : styles.tlDotDoc}`} />
+      <div className={styles.tlBody}>
+        <div className={styles.tlMeta}>
+          <span className={styles.tlTag}>{esRelease ? 'release' : 'doc'}</span>
+          <span className={styles.tlDate}>{fmtFecha(e.fecha)}</span>
+        </div>
+        <a className={styles.tlDetail} href={e.url} target="_blank" rel="noopener">
+          {e.detalle}
+        </a>
+      </div>
+    </li>
+  );
+}
+
+export default function ProjectDetail({project: p}) {
+  const est = ESTADOS[p.estado] || ESTADOS.nuevo;
+  const docHref = useBaseUrl(p.doc_url || '/docs/intro');
+  const tablas = (p.sources && p.sources.table_list) || [];
+  const dinfo = (p.sources && p.sources.dataset_info) || {};
+
+  return (
+    <Layout title={p.nombre} description={`Detalle de ${p.nombre}`}>
+      <div className={styles.page}>
+        <div className={styles.breadcrumb}>
+          <a href={useBaseUrl('/')}>Dashboard</a> <span>／</span> <span>{p.nombre}</span>
+        </div>
+
+        <header className={styles.head}>
+          <div className={styles.headTop}>
+            <span className={`${styles.dot} ${est.cls}`} />
+            <span className={styles.estado}>{est.label}</span>
+            <span className={styles.area}>{p.area}</span>
+          </div>
+          <h1 className={styles.title}>{p.nombre}</h1>
+          <div className={styles.actions}>
+            <a className={styles.btnPrimary} href={docHref}>Ver Model Card →</a>
+            <a className={styles.btnGhost} href={p.repo_url} target="_blank" rel="noopener">
+              Repositorio ↗
+            </a>
+          </div>
+        </header>
+
+        <section className={styles.metrics}>
+          <Metric label="algoritmo" value={p.algoritmo} />
+          <Metric label="flavour" value={p.flavour} />
+          <Metric label="AUC" value={typeof p.auc === 'number' ? p.auc.toFixed(3) : null} />
+          <Metric label="features" value={p.features} />
+          <Metric label="tablas fuente" value={p.n_tablas} />
+          <Metric label="completitud" value={`${p.completitud}%`} />
+        </section>
+
+        <div className={styles.grid}>
+          <section className={styles.card}>
+            <h2 className={styles.cardTitle}>📄 Documentación</h2>
+            <ul className={styles.docList}>
+              {(p.docs_esperados || []).map((d) => (
+                <DocCheck key={d} esperado={d} presente={(p.docs_presentes || []).includes(d)} />
+              ))}
+            </ul>
+            {tablas.length > 0 && (
+              <>
+                <h3 className={styles.subTitle}>Linaje</h3>
+                <ul className={styles.tableList}>
+                  {tablas.map((t) => (
+                    <li key={t}>
+                      <code>{t}</code>
+                      {dinfo[t] && <span className={styles.tableCols}> — {dinfo[t].join(', ')}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </section>
+
+          <section className={styles.card}>
+            <h2 className={styles.cardTitle}>🕒 Histórico</h2>
+            <p className={styles.hint}>
+              Derivado de commits a <code>docs/</code> y tags/releases del repo — no es un snapshot
+              guardado, se recalcula en cada build.
+            </p>
+            {p.historial && p.historial.length > 0 ? (
+              <ul className={styles.timeline}>
+                {p.historial.map((e, i) => (
+                  <TimelineItem key={i} e={e} />
+                ))}
+              </ul>
+            ) : (
+              <p className={styles.hint}>Sin eventos registrados todavía.</p>
+            )}
+          </section>
+        </div>
+      </div>
+    </Layout>
+  );
+}
