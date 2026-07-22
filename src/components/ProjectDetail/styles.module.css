@@ -16,10 +16,10 @@
 
 .actions { display: flex; gap: 0.7rem; }
 .btnPrimary {
-  text-decoration: none; background: var(--kc-grad); color: #06121a; font-weight: 700;
+  text-decoration: none; background: var(--kc-grad); color: var(--kc-btn-ink); font-weight: 700;
   border-radius: 10px; padding: 0.6rem 1.1rem; font-size: 0.9rem;
 }
-.btnPrimary:hover { color: #06121a; filter: brightness(1.08); text-decoration: none; }
+.btnPrimary:hover { color: var(--kc-btn-ink); filter: brightness(1.08); text-decoration: none; }
 .btnGhost {
   text-decoration: none; color: var(--kc-ink); border: 1px solid var(--kc-border);
   border-radius: 10px; padding: 0.6rem 1.1rem; font-size: 0.9rem;
@@ -27,16 +27,17 @@
 .btnGhost:hover { border-color: var(--kc-cyan); color: var(--kc-cyan); text-decoration: none; }
 
 .metrics {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.8rem; margin-bottom: 2rem;
 }
 .metric {
   background: var(--kc-surface); border: 1px solid var(--kc-border); border-radius: 12px;
-  padding: 0.9rem; text-align: center;
+  padding: 0.9rem; text-align: center; box-shadow: var(--kc-shadow); min-width: 0;
 }
 .metricValue {
-  font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  font-size: 1.05rem; font-weight: 800; font-variant-numeric: tabular-nums;
   background: var(--kc-grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+  overflow-wrap: break-word; line-height: 1.3;
 }
 .metricLabel { font-size: 0.72rem; color: var(--kc-muted); margin-top: 0.15rem; }
 
@@ -45,7 +46,7 @@
 
 .card {
   background: var(--kc-surface); border: 1px solid var(--kc-border); border-radius: 16px;
-  padding: 1.4rem; backdrop-filter: blur(10px);
+  padding: 1.4rem; backdrop-filter: blur(10px); box-shadow: var(--kc-shadow);
 }
 .cardTitle { font-size: 1.05rem; margin: 0 0 1rem; }
 .subTitle { font-size: 0.85rem; color: var(--kc-muted); margin: 1.2rem 0 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -55,11 +56,17 @@
 .docOk, .docMissing { display: flex; align-items: center; gap: 0.6rem; font-size: 0.9rem; }
 .docOk { color: var(--kc-ink); }
 .docMissing { color: var(--kc-muted); }
-.docIcon { color: var(--kc-green); font-weight: 700; width: 1rem; }
+.docIcon { color: var(--kc-green); font-weight: 700; width: 1rem; flex-shrink: 0; }
 .docMissing .docIcon { color: var(--kc-slate); }
+.docLink { color: var(--kc-ink); text-decoration: none; font-weight: 600; }
+.docLink:hover { color: var(--kc-cyan); text-decoration: underline; }
+.docPendingTag {
+  font-size: 0.68rem; color: var(--kc-muted); border: 1px solid var(--kc-border);
+  border-radius: 6px; padding: 0.05rem 0.4rem; text-transform: uppercase; letter-spacing: 0.04em;
+}
 
 .tableList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.82rem; }
-.tableList code { color: var(--kc-cyan); background: rgba(34,211,238,0.08); padding: 0.1rem 0.4rem; border-radius: 6px; }
+.tableList code { color: var(--kc-cyan); background: var(--kc-chip-bg); padding: 0.1rem 0.4rem; border-radius: 6px; }
 .tableCols { color: var(--kc-muted); }
 
 .timeline { list-style: none; padding: 0; margin: 0; position: relative; }

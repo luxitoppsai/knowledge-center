@@ -24,11 +24,27 @@ function Metric({label, value}) {
   );
 }
 
-function DocCheck({slug, esperado, presente}) {
+const ETIQUETAS_DOC = {
+  'model-card': '🧠 Model Card',
+  lineage: '🔗 Linaje',
+  functions: '⚙️ Funciones',
+};
+
+function DocCheck({projectSlug, doc, presente}) {
+  const etiqueta = ETIQUETAS_DOC[doc] || doc;
+  const href = useBaseUrl(`/docs/${projectSlug}/${doc}`);
+  if (presente) {
+    return (
+      <li className={styles.docOk}>
+        <span className={styles.docIcon}>✓</span>
+        <a className={styles.docLink} href={href}>{etiqueta}</a>
+      </li>
+    );
+  }
   return (
-    <li className={presente ? styles.docOk : styles.docMissing}>
-      <span className={styles.docIcon}>{presente ? '✓' : '○'}</span>
-      {esperado}
+    <li className={styles.docMissing}>
+      <span className={styles.docIcon}>○</span>
+      {etiqueta} <span className={styles.docPendingTag}>pendiente</span>
     </li>
   );
 }
@@ -93,7 +109,12 @@ export default function ProjectDetail({project: p}) {
             <h2 className={styles.cardTitle}>📄 Documentación</h2>
             <ul className={styles.docList}>
               {(p.docs_esperados || []).map((d) => (
-                <DocCheck key={d} esperado={d} presente={(p.docs_presentes || []).includes(d)} />
+                <DocCheck
+                  key={d}
+                  projectSlug={p.slug}
+                  doc={d}
+                  presente={(p.docs_presentes || []).includes(d)}
+                />
               ))}
             </ul>
             {tablas.length > 0 && (

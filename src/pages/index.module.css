@@ -8,8 +8,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 92, 246, 0.06) 1px, transparent 1px);
+    linear-gradient(var(--kc-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--kc-grid-line-2) 1px, transparent 1px);
   background-size: 42px 42px;
   mask-image: radial-gradient(700px 380px at 50% 10%, #000, transparent 75%);
 }
@@ -56,12 +56,13 @@
   border-radius: 16px;
   padding: 1.3rem;
   backdrop-filter: blur(10px);
+  box-shadow: var(--kc-shadow);
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .card:hover {
   transform: translateY(-4px);
-  border-color: rgba(34, 211, 238, 0.45);
-  box-shadow: 0 14px 40px rgba(34, 211, 238, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.18) inset;
+  border-color: var(--kc-cyan);
+  box-shadow: var(--kc-card-hover-shadow);
 }
 .cardTop { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; }
 .dot { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
@@ -76,7 +77,7 @@
 
 .completeness { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.9rem; }
 .compBar {
-  flex: 1; height: 7px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden;
+  flex: 1; height: 7px; border-radius: 99px; background: var(--kc-track); overflow: hidden;
 }
 .compBar span { display: block; height: 100%; background: var(--kc-grad); }
 .compPct { font-size: 0.75rem; color: var(--kc-muted); font-variant-numeric: tabular-nums; }
@@ -84,7 +85,7 @@
 .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.1rem; }
 .chip {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--kc-border);
+  background: var(--kc-chip-bg); border: 1px solid var(--kc-border);
   border-radius: 8px; padding: 0.2rem 0.5rem; font-size: 0.75rem;
 }
 .chipK { color: var(--kc-muted); font-family: var(--ifm-font-family-monospace); }
@@ -93,10 +94,10 @@
 .links { display: flex; gap: 0.6rem; }
 .btnPrimary {
   flex: 1; text-align: center; text-decoration: none;
-  background: var(--kc-grad); color: #06121a; font-weight: 700;
+  background: var(--kc-grad); color: var(--kc-btn-ink); font-weight: 700;
   border-radius: 10px; padding: 0.55rem 0.8rem; font-size: 0.88rem;
 }
-.btnPrimary:hover { color: #06121a; filter: brightness(1.08); text-decoration: none; }
+.btnPrimary:hover { color: var(--kc-btn-ink); filter: brightness(1.08); text-decoration: none; }
 .btnGhost {
   text-decoration: none; color: var(--kc-ink);
   border: 1px solid var(--kc-border); border-radius: 10px; padding: 0.55rem 0.8rem; font-size: 0.88rem;

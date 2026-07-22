@@ -1,6 +1,47 @@
-/* Knowledge Center — tema corporativo-futurista (dark, glass, cyan→violet) */
+/* Knowledge Center — tema corporativo-futurista (claro por defecto, oscuro como override).
+   Misma identidad en ambos: acento gradiente cyan→índigo→violeta. */
 
 :root {
+  --ifm-color-primary: #0891b2;
+  --ifm-color-primary-dark: #077a97;
+  --ifm-color-primary-darker: #066e88;
+  --ifm-color-primary-darkest: #055a70;
+  --ifm-color-primary-light: #0aa8cc;
+  --ifm-color-primary-lighter: #0bb5db;
+  --ifm-color-primary-lightest: #22d3ee;
+  --ifm-font-family-base: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace;
+
+  /* Claro (default) */
+  --ifm-background-color: #f5f7fb;
+  --ifm-background-surface-color: #ffffff;
+  --ifm-navbar-background-color: rgba(255, 255, 255, 0.78);
+  --ifm-footer-background-color: #eef1f7;
+  --ifm-color-content: #131a2c;
+  --ifm-heading-color: #0c1120;
+
+  --kc-cyan: #0891b2;
+  --kc-violet: #7c3aed;
+  --kc-grad: linear-gradient(120deg, #0891b2 0%, #4f46e5 55%, #9333ea 100%);
+  --kc-ink: #131a2c;
+  --kc-muted: #5b6478;
+  --kc-surface: rgba(255, 255, 255, 0.75);
+  --kc-border: rgba(15, 23, 42, 0.10);
+  --kc-shadow: 0 10px 30px rgba(30, 41, 59, 0.08);
+  --kc-green: #059669;
+  --kc-amber: #b45309;
+  --kc-slate: #64748b;
+  --kc-btn-ink: #ffffff;
+  --kc-grid-line: rgba(8, 145, 178, 0.10);
+  --kc-grid-line-2: rgba(124, 58, 237, 0.10);
+  --kc-blob-1: rgba(8, 145, 178, 0.10);
+  --kc-blob-2: rgba(147, 51, 234, 0.09);
+  --kc-track: rgba(15, 23, 42, 0.08);
+  --kc-chip-bg: rgba(15, 23, 42, 0.035);
+  --kc-card-hover-shadow: 0 14px 32px rgba(8, 145, 178, 0.14), 0 0 0 1px rgba(124, 58, 237, 0.16) inset;
+}
+
+html[data-theme='dark'] {
   --ifm-color-primary: #22d3ee;
   --ifm-color-primary-dark: #12b6d0;
   --ifm-color-primary-darker: #0ea5c0;
@@ -8,11 +49,14 @@
   --ifm-color-primary-light: #45dbf1;
   --ifm-color-primary-lighter: #63e2f4;
   --ifm-color-primary-lightest: #9aeefa;
-  --ifm-font-family-base: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --ifm-font-family-monospace: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace;
+
   --ifm-background-color: #070a12;
+  --ifm-background-surface-color: #0c1120;
   --ifm-navbar-background-color: rgba(10, 14, 26, 0.72);
   --ifm-footer-background-color: #070a12;
+  --ifm-color-content: #e8ecf5;
+  --ifm-heading-color: #f4f7fc;
+
   --kc-cyan: #22d3ee;
   --kc-violet: #8b5cf6;
   --kc-grad: linear-gradient(120deg, #22d3ee 0%, #6366f1 55%, #a855f7 100%);
@@ -20,23 +64,24 @@
   --kc-muted: #8a94a8;
   --kc-surface: rgba(255, 255, 255, 0.04);
   --kc-border: rgba(255, 255, 255, 0.09);
+  --kc-shadow: none;
   --kc-green: #34d399;
   --kc-amber: #fbbf24;
   --kc-slate: #64748b;
-}
-
-html[data-theme='dark'] {
-  --ifm-background-color: #070a12;
-  --ifm-background-surface-color: #0c1120;
-  --ifm-color-content: var(--kc-ink);
-  --ifm-heading-color: #f4f7fc;
-  --ifm-navbar-background-color: rgba(10, 14, 26, 0.72);
+  --kc-btn-ink: #06121a;
+  --kc-grid-line: rgba(34, 211, 238, 0.06);
+  --kc-grid-line-2: rgba(139, 92, 246, 0.06);
+  --kc-blob-1: rgba(34, 211, 238, 0.10);
+  --kc-blob-2: rgba(168, 85, 247, 0.10);
+  --kc-track: rgba(255, 255, 255, 0.08);
+  --kc-chip-bg: rgba(255, 255, 255, 0.05);
+  --kc-card-hover-shadow: 0 14px 40px rgba(34, 211, 238, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.18) inset;
 }
 
 body {
   background:
-    radial-gradient(900px 500px at 15% -10%, rgba(34, 211, 238, 0.10), transparent 60%),
-    radial-gradient(900px 600px at 100% 0%, rgba(168, 85, 247, 0.10), transparent 55%),
+    radial-gradient(900px 500px at 15% -10%, var(--kc-blob-1), transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, var(--kc-blob-2), transparent 55%),
     var(--ifm-background-color);
 }
 
@@ -48,7 +93,7 @@ body {
 
 /* Tablas y admoniciones de los model cards */
 .markdown table { border-radius: 10px; overflow: hidden; }
-.markdown th { background: rgba(34, 211, 238, 0.08); }
+.markdown th { background: rgba(8, 145, 178, 0.08); }
 
 /* Gradiente utilitario para títulos */
 .kc-gradient-text {
