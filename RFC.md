@@ -187,3 +187,40 @@ realmente lee**, no la que se pusheó.
 
 Todo verificado con Playwright (clics reales) en producción tras cada cambio, cero errores de
 consola en el estado final.
+
+## 14. Grilla real + métricas más visuales + documentación (2026-07-22)
+
+Luis preguntó por replicar el sistema, lo que llevó a documentar el "enlace" entre repos con
+precisión (§ver README/setup), y de paso pidió hacer la grilla del dashboard más robusta con más
+proyectos y las métricas más visuales.
+
+**Bug crítico real cazado al simular 8 proyectos** (no evidente con solo 3): la grilla renderizaba
+en **una sola columna** sin importar el viewport. Causa raíz confirmada midiendo
+`getComputedStyle` real (no por captura): `.main` es hijo directo de un contenedor
+`display:flex; flex-direction:column` (el `mainWrapper` de Docusaurus). La regla
+`.main{max-width:1100px; margin:0 auto}` desactivaba el `align-items:stretch` por defecto — un
+`margin:auto` en el eje cruzado de un hijo flex anula el stretch, y el ancho pasa a calcularse por
+contenido (shrink-to-fit), colapsando el `grid-template-columns: repeat(auto-fill, minmax(300px,1fr))`
+a un solo track. Mismo patrón que ya usaba `.hero`/`.heroInner` (que sí funcionaba) aplicado ahora a
+`.main`/`.mainInner`: el hijo flex se estira full-width sin margen, el centrado real vive en un div
+interno. Verificado con 8 proyectos simulados: ahora renderiza 4 columnas reales.
+
+**Métricas más visuales**: `ProgressRing` (anillo SVG con % adentro, coloreado según estado)
+reemplaza la barra fina de completitud. El estado pasa de "punto + texto" a una **pill** con fondo
+tintado — más peso visual, patrón estándar de badge de status.
+
+**Documentación agregada**:
+- `README.md`: qué es, diagrama de arquitectura (mermaid), los 4 disparadores del rebuild, tabla
+  exacta de "de dónde sale cada dato" (completitud = archivos presentes en `docs/`; estado =
+  tags/releases de GitHub, **no** PRs; métricas = `model_data.json`; histórico = commits a `docs/`
+  + tags, sin snapshots).
+- `CONTRIBUTING.md`: setup, flujos comunes, y **por qué hay que verificar con Playwright/clicks
+  reales** (no alcanza con `curl` — ya mordió antes), más las convenciones de diseño que no hay
+  que romper (el gotcha de `margin:auto` en flex column, disciplina de gradiente, iconos propios).
+- `setup/`: referencia autocontenida para integrar un repo de proyecto sin pasar por el template
+  (`notify-hub.yml` listo para copiar + ejemplos de `model_data.json`/`project.yaml`/docs).
+- `RFC.md` (este archivo) copiado al repo — antes solo vivía local, el README lo referenciaba con
+  un link roto entre repos distintos.
+
+Todo verificado con Playwright (clics reales) en producción: grid de 4 columnas con 8 proyectos
+simulados, 3 columnas reales con los 3 proyectos reales, cero errores de consola.
