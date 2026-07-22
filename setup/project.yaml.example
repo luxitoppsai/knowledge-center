@@ -1,0 +1,9 @@
+# Manifest MÍNIMO del proyecto — solo lo que se sabe al CREAR el repo.
+# El hub deriva el resto (algoritmo, métricas, completitud, estado) en cada build,
+# leyendo model_data.json y las señales del repo (docs presentes, tags/releases).
+# No lo uses para guardar estado que cambia con el tiempo — se desactualizaría.
+name: "Mi Proyecto"
+slug: "mi-proyecto"
+area: "an_ejemplo"
+tipo_modelo: "clasificacion"
+owner: "tu-usuario-o-equipo"

@@ -1,0 +1,34 @@
+name: Notificar al Knowledge Center
+
+# Copiá este archivo a .github/workflows/notify-hub.yml en tu repo de proyecto.
+# Al hacer push a `develop`, avisa al hub para que se reconstruya (patrón "vista computada":
+# el hub jala la doc fresca en su build, este workflow NO le empuja copias — solo un aviso).
+#
+# ⚠️ Reemplazá "OWNER/knowledge-center" por el owner/repo real de tu hub antes de usarlo.
+# (Si tu repo nació del template `knowledge-center-template`, este archivo ya viene generado
+# con el owner correcto — no hace falta tocarlo.)
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "docs/**"
+      - "model_data.json"
+      - "project.yaml"
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: repository_dispatch al hub
+        env:
+          # Secret a crear en ESTE repo: Settings → Secrets and variables → Actions.
+          # Debe ser un PAT (fine-grained o classic) con permiso de disparar workflows
+          # (repo scope) sobre el repo del hub.
+          TOKEN: ${{ secrets.KC_DISPATCH_TOKEN }}
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/OWNER/knowledge-center/dispatches" \
+            -d "{\"event_type\":\"docs-updated\",\"client_payload\":{\"repo\":\"${GITHUB_REPOSITORY}\"}}"

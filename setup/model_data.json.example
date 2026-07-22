@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-01-01T00:00:00+00:00",
+  "project_code": "mi-proyecto",
+  "area": "an_ejemplo",
+  "models": [
+    {
+      "model_name": "modelo_ejemplo",
+      "algorithm_name": "GradientBoosting",
+      "flavour": "sklearn",
+      "winner_params": { "raw": "[max_depth:6][n_estimators:200][learning_rate:0.05]" },
+      "features": { "columns_model": ["feature_a", "feature_b", "feature_c"], "feature_count": 3 },
+      "metrics": {
+        "test": {
+          "evaluation_metrics_data": [
+            { "set_name": "modelo_ejemplo", "areaUnderROC(train)": 0.80 }
+          ]
+        }
+      },
+      "component_steps": ["build_population", "make_dataset", "make_features", "process_model"]
+    }
+  ],
+  "sources": {
+    "dataset_info": { "catalog.esquema.tabla_ejemplo": ["feature_a", "feature_b"] },
+    "join_columns": ["id"],
+    "table_list": ["catalog.esquema.tabla_ejemplo"]
+  }
+}
