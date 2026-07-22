@@ -2,12 +2,13 @@ import React, {useState, useMemo} from 'react';
 import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import catalog from '@site/src/data/catalog.json';
+import ProgressRing from '@site/src/components/ProgressRing';
 import styles from './index.module.css';
 
 const ESTADOS = {
-  produccion: {label: 'Producción', cls: styles.dotGreen},
-  desarrollo: {label: 'Desarrollo', cls: styles.dotAmber},
-  nuevo: {label: 'Nuevo', cls: styles.dotSlate},
+  produccion: {label: 'Producción', dot: styles.dotGreen, pill: styles.pillGreen, ring: 'var(--kc-green)'},
+  desarrollo: {label: 'Desarrollo', dot: styles.dotAmber, pill: styles.pillAmber, ring: 'var(--kc-amber)'},
+  nuevo: {label: 'Nuevo', dot: styles.dotSlate, pill: styles.pillSlate, ring: 'var(--kc-slate)'},
 };
 
 function Stat({valor, label}) {
@@ -34,20 +35,19 @@ function Card({p}) {
   const detalleHref = useBaseUrl(`/proyecto/${p.slug}`);
   return (
     <article className={styles.card}>
-      <div className={styles.cardTop}>
-        <span className={`${styles.dot} ${est.cls}`} />
-        <span className={styles.estado}>{est.label}</span>
-        <span className={styles.area}>{p.area}</span>
-      </div>
-      <h3 className={styles.cardTitle}>
-        <a href={detalleHref} className={styles.cardTitleLink}>{p.nombre}</a>
-      </h3>
-
-      <div className={styles.completeness}>
-        <div className={styles.compBar}>
-          <span style={{width: `${p.completitud}%`}} />
+      <div className={styles.cardHead}>
+        <ProgressRing value={p.completitud} size={46} color={est.ring} />
+        <div className={styles.cardHeadText}>
+          <div className={styles.cardTop}>
+            <span className={`${styles.pill} ${est.pill}`}>
+              <span className={`${styles.dot} ${est.dot}`} /> {est.label}
+            </span>
+            <span className={styles.area}>{p.area}</span>
+          </div>
+          <h3 className={styles.cardTitle}>
+            <a href={detalleHref} className={styles.cardTitleLink}>{p.nombre}</a>
+          </h3>
         </div>
-        <span className={styles.compPct}>{p.completitud}% doc</span>
       </div>
 
       <div className={styles.chips}>
@@ -95,6 +95,7 @@ export default function Home() {
       </header>
 
       <main className={styles.main}>
+       <div className={styles.mainInner}>
         <div className={styles.filters}>
           <select value={area} onChange={(e) => setArea(e.target.value)}>
             <option value="">Todas las áreas</option>
@@ -122,6 +123,7 @@ export default function Home() {
             ))}
           </div>
         )}
+       </div>
       </main>
     </Layout>
   );
