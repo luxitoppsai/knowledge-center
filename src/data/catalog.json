@@ -20,9 +20,15 @@
     "estado": "produccion",
     "resumen_proposito": "Estima la probabilidad de incumplimiento a 12 meses de una PYME que solicita un crédito de admisión. Alimenta la decisión de aprobación y la asignación de línea. **No** debe usarse para clientes ya vigentes ni para productos distintos a admisión.",
     "resumen_como_funciona": "La población de solicitudes se cruza con matrices de buró y ventas, se construyen features (endeudamiento, comportamiento de pago, actividad comercial) y un Gradient Boosting sobre Spark produce un score 0–1. El score se segmenta en deciles de riesgo para la política de aprobación.",
-    "actualizado": "2026-07-22T01:15:30Z",
+    "actualizado": "2026-07-22T04:24:07Z",
     "creado": "2026-07-22T00:38:57Z",
     "historial": [
+      {
+        "fecha": "2026-07-22T04:24:06Z",
+        "tipo": "doc",
+        "detalle": "fix(design): sidebar_label sin emoji + sync generador corregido",
+        "url": "https://github.com/luxitoppsai/kc-scoring-admision-pyme/commit/73bda44361bcbd67c92f5aff41118d332df6fb29"
+      },
       {
         "fecha": "2026-07-22T00:38:55Z",
         "tipo": "doc",
@@ -82,9 +88,15 @@
     "estado": "desarrollo",
     "resumen_proposito": "Predice qué clientes de tarjeta de crédito tienen mayor probabilidad de abandonar el producto en los próximos meses, para accionar campañas de retención.",
     "resumen_como_funciona": null,
-    "actualizado": "2026-07-22T01:15:32Z",
+    "actualizado": "2026-07-22T04:24:09Z",
     "creado": "2026-07-22T00:39:06Z",
     "historial": [
+      {
+        "fecha": "2026-07-22T04:24:08Z",
+        "tipo": "doc",
+        "detalle": "fix(design): sidebar_label sin emoji + sync generador corregido",
+        "url": "https://github.com/luxitoppsai/kc-churn-de-tarjetas/commit/e7244b347d7d90e4287c93d0505e2e838ef4dfa8"
+      },
       {
         "fecha": "2026-07-22T00:39:05Z",
         "tipo": "doc",

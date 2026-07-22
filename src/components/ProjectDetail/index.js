@@ -1,6 +1,7 @@
 import React from 'react';
 import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import Icon from '@site/src/components/Icon';
 import styles from './styles.module.css';
 
 const ESTADOS = {
@@ -37,27 +38,29 @@ function Metric({label, value}) {
   );
 }
 
-const ETIQUETAS_DOC = {
-  'model-card': '🧠 Model Card',
-  lineage: '🔗 Linaje',
-  functions: '⚙️ Funciones',
+const DOCS_META = {
+  'model-card': {label: 'Model Card', icon: 'model'},
+  lineage: {label: 'Linaje', icon: 'lineage'},
+  functions: {label: 'Funciones', icon: 'functions'},
 };
 
 function DocCheck({projectSlug, doc, presente}) {
-  const etiqueta = ETIQUETAS_DOC[doc] || doc;
+  const meta = DOCS_META[doc] || {label: doc, icon: 'doc'};
   const href = useBaseUrl(`/docs/${projectSlug}/${doc}`);
   if (presente) {
     return (
       <li className={styles.docOk}>
         <span className={styles.docIcon}>✓</span>
-        <a className={styles.docLink} href={href}>{etiqueta}</a>
+        <Icon name={meta.icon} className={styles.docTypeIcon} />
+        <a className={styles.docLink} href={href}>{meta.label}</a>
       </li>
     );
   }
   return (
     <li className={styles.docMissing}>
       <span className={styles.docIcon}>○</span>
-      {etiqueta} <span className={styles.docPendingTag}>pendiente</span>
+      <Icon name={meta.icon} className={styles.docTypeIcon} />
+      {meta.label} <span className={styles.docPendingTag}>pendiente</span>
     </li>
   );
 }
@@ -141,7 +144,7 @@ export default function ProjectDetail({project: p}) {
 
         <div className={styles.grid}>
           <section className={styles.card}>
-            <h2 className={styles.cardTitle}>📄 Documentación</h2>
+            <h2 className={styles.cardTitle}><Icon name="doc" className={styles.cardTitleIcon} /> Documentación</h2>
             <ul className={styles.docList}>
               {(p.docs_esperados || []).map((d) => (
                 <DocCheck
@@ -168,7 +171,7 @@ export default function ProjectDetail({project: p}) {
           </section>
 
           <section className={styles.card}>
-            <h2 className={styles.cardTitle}>🕒 Histórico</h2>
+            <h2 className={styles.cardTitle}><Icon name="clock" className={styles.cardTitleIcon} /> Histórico</h2>
             <p className={styles.hint}>
               Derivado de commits a <code>docs/</code> y tags/releases del repo — no es un snapshot
               guardado, se recalcula en cada build.

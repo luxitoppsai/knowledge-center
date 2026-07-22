@@ -4,7 +4,7 @@ const {themes} = require('prism-react-renderer');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Knowledge Center',
-  tagline: 'El cerebro de los modelos — documentación viva de todos los proyectos',
+  tagline: 'Documentación viva de todos los proyectos, computada en vivo desde los repos',
   favicon: 'img/favicon.svg',
 
   url: 'https://luxitoppsai.github.io',
@@ -14,6 +14,18 @@ const config = {
   trailingSlash: false,
 
   onBrokenLinks: 'warn',
+
+  headTags: [
+    {tagName: 'link', attributes: {rel: 'preconnect', href: 'https://fonts.googleapis.com'}},
+    {tagName: 'link', attributes: {rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous'}},
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'stylesheet',
+        href: 'https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap',
+      },
+    },
+  ],
 
   i18n: {defaultLocale: 'es', locales: ['es']},
 

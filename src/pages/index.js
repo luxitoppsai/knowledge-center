@@ -77,14 +77,11 @@ export default function Home() {
   const enProd = catalog.filter((p) => p.estado === 'produccion').length;
 
   return (
-    <Layout title="Dashboard" description="Knowledge Center — cerebro de los modelos">
+    <Layout title="Dashboard" description="Knowledge Center — documentación viva de todos los proyectos">
       <header className={styles.hero}>
-        <div className={styles.heroGrid} />
         <div className={styles.heroInner}>
-          <span className={styles.eyebrow}>KNOWLEDGE CENTER</span>
-          <h1 className={styles.heroTitle}>
-            El <span className="kc-gradient-text">cerebro</span> de los modelos
-          </h1>
+          <span className={styles.eyebrow}>COE · MODELOS</span>
+          <h1 className={styles.heroTitle}>Knowledge Center</h1>
           <p className={styles.heroSub}>
             Documentación viva de cada proyecto — Model Cards, linaje y funciones, computados en vivo
             desde los repos.
