@@ -1,0 +1,11 @@
+node_modules/
+build/
+.docusaurus/
+.cache-loader/
+npm-debug.log*
+.DS_Store
+
+# Vista computada: docs de proyectos se re-derivan en cada build, no se versionan.
+# (catalog.json SÍ se versiona con un placeholder vacío, para que el sitio compile sin agregación)
+docs/*/
+!docs/intro.md

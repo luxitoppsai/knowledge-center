@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "scoring-admision-pyme",
+    "nombre": "Scoring Admision PYME",
+    "area": "an_riesgos",
+    "tipo_modelo": "clasificacion",
+    "repo_url": "https://github.com/luxitoppsai/kc-scoring-admision-pyme",
+    "doc_url": "/docs/scoring-admision-pyme/model-card",
+    "algoritmo": "GradientBoosting",
+    "flavour": "spark",
+    "features": 6,
+    "auc": 0.805,
+    "n_tablas": 3,
+    "docs_presentes": [
+      "functions",
+      "lineage",
+      "model-card"
+    ],
+    "completitud": 100,
+    "estado": "produccion",
+    "actualizado": "2026-07-22T00:39:15Z"
+  },
+  {
+    "slug": "churn-de-tarjetas",
+    "nombre": "Churn de Tarjetas",
+    "area": "an_tarjetas",
+    "tipo_modelo": "clasificacion",
+    "repo_url": "https://github.com/luxitoppsai/kc-churn-de-tarjetas",
+    "doc_url": "/docs/churn-de-tarjetas/model-card",
+    "algoritmo": "LogisticRegression",
+    "flavour": "sklearn",
+    "features": 4,
+    "auc": 0.712,
+    "n_tablas": 2,
+    "docs_presentes": [
+      "model-card"
+    ],
+    "completitud": 33,
+    "estado": "desarrollo",
+    "actualizado": "2026-07-22T00:39:13Z"
+  }
+]

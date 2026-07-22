@@ -1,0 +1,56 @@
+name: Deploy Knowledge Center
+
+# Vista computada: en cada build se re-descubren los repos kc-*, se re-derivan catálogo/docs
+# frescos, se construye Docusaurus y se publica en Pages. Nada se almacena entre builds.
+
+on:
+  repository_dispatch:
+    types: [docs-updated]
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Instalar deps de agregación
+        run: pip install requests
+
+      - name: Agregar catálogo (vista computada)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KC_OWNER: luxitoppsai
+          KC_PREFIX: "kc-"
+        run: python scripts/aggregate.py
+
+      - uses: actions/setup-node@v4
+        with: {node-version: "20", cache: "npm"}
+      - run: npm ci
+      - run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with: {path: build}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: {name: github-pages, url: ${{ steps.deployment.outputs.page_url }}}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

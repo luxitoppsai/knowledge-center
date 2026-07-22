@@ -1,0 +1,59 @@
+/* Knowledge Center — tema corporativo-futurista (dark, glass, cyan→violet) */
+
+:root {
+  --ifm-color-primary: #22d3ee;
+  --ifm-color-primary-dark: #12b6d0;
+  --ifm-color-primary-darker: #0ea5c0;
+  --ifm-color-primary-darkest: #0b8aa1;
+  --ifm-color-primary-light: #45dbf1;
+  --ifm-color-primary-lighter: #63e2f4;
+  --ifm-color-primary-lightest: #9aeefa;
+  --ifm-font-family-base: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ifm-font-family-monospace: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace;
+  --ifm-background-color: #070a12;
+  --ifm-navbar-background-color: rgba(10, 14, 26, 0.72);
+  --ifm-footer-background-color: #070a12;
+  --kc-cyan: #22d3ee;
+  --kc-violet: #8b5cf6;
+  --kc-grad: linear-gradient(120deg, #22d3ee 0%, #6366f1 55%, #a855f7 100%);
+  --kc-ink: #e8ecf5;
+  --kc-muted: #8a94a8;
+  --kc-surface: rgba(255, 255, 255, 0.04);
+  --kc-border: rgba(255, 255, 255, 0.09);
+  --kc-green: #34d399;
+  --kc-amber: #fbbf24;
+  --kc-slate: #64748b;
+}
+
+html[data-theme='dark'] {
+  --ifm-background-color: #070a12;
+  --ifm-background-surface-color: #0c1120;
+  --ifm-color-content: var(--kc-ink);
+  --ifm-heading-color: #f4f7fc;
+  --ifm-navbar-background-color: rgba(10, 14, 26, 0.72);
+}
+
+body {
+  background:
+    radial-gradient(900px 500px at 15% -10%, rgba(34, 211, 238, 0.10), transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, rgba(168, 85, 247, 0.10), transparent 55%),
+    var(--ifm-background-color);
+}
+
+.navbar {
+  backdrop-filter: saturate(140%) blur(12px);
+  border-bottom: 1px solid var(--kc-border);
+}
+.navbar__title { font-weight: 800; letter-spacing: -0.02em; }
+
+/* Tablas y admoniciones de los model cards */
+.markdown table { border-radius: 10px; overflow: hidden; }
+.markdown th { background: rgba(34, 211, 238, 0.08); }
+
+/* Gradiente utilitario para títulos */
+.kc-gradient-text {
+  background: var(--kc-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
