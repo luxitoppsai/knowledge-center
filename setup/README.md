@@ -42,12 +42,8 @@ un modelo 100% documentado y otro sin empezar conviven en el mismo repo sin prob
    en el hub, lista separada por comas). El nombre completo se muestra tal cual en el dashboard —
    el hub **no** recorta el prefijo. Ejemplo: `coaa_mi_proyecto`.
 
-2. **`config/mlops_config.json`** en la raíz del repo — lista los modelos del proyecto. Ver
-   [`mlops_config.json.example`](./mlops_config.json.example). Formato:
-   ```json
-   { "models": [ { "name": "modelo_a", "version": "1" } ], "environments": [] }
-   ```
-   El `name` de cada entrada es el nombre exacto de la carpeta en `docs/` (`docs/<name>/`).
+2. **`config/mlops_config.json`** en la raíz del repo — lista los modelos del proyecto. Ver el
+   **esquema exacto** más abajo y [`mlops_config.json.example`](./mlops_config.json.example).
 
 3. **Por cada modelo listado, `docs/<nombre_modelo>/model_data.json`** — metadata del modelo
    (algoritmo, hiperparámetros, features, métricas, linaje de tablas). Ver
@@ -83,6 +79,42 @@ un modelo 100% documentado y otro sin empezar conviven en el mismo repo sin prob
    en el rebuild programado (diario); con esto, el rebuild es casi instantáneo tras tu push a
    `develop`. Necesita el secret `KC_DISPATCH_TOKEN` (PAT con permiso de disparar workflows en el
    repo del hub) configurado en **tu** repo.
+
+## Esquema exacto de `config/mlops_config.json`
+
+Este archivo es el punto de entrada de todo el resto (qué modelos tiene el proyecto, dónde buscar
+su documentación). Sin un contrato explícito, cada equipo termina escribiéndolo distinto — este es
+el esquema fijo, sin ambigüedad:
+
+```json
+{
+  "models": [
+    { "name": "fv_RandomForestSet_bestModel", "version": "1" },
+    { "name": "mp_LogisticRegression_bestModel", "version": "1" }
+  ],
+  "environments": []
+}
+```
+
+| Campo | Tipo | Obligatorio | Qué significa |
+| --- | --- | --- | --- |
+| `models` | array de objetos | **Sí** | Un objeto por modelo del proyecto. Si falta esta clave, el hub trata al proyecto como si no tuviera modelos (0 modelos, no rompe el build, pero avisa por log). |
+| `models[].name` | string | **Sí** | Nombre exacto de la carpeta en `docs/` (`docs/<name>/`). Si falta o es vacío, ESE modelo se descarta (no aparece en el dashboard) — el hub no puede adivinar a qué carpeta corresponde. |
+| `models[].version` | string | Recomendado | Versión del modelo, se muestra en el detalle (`v1`, `v2`...). Si falta, el modelo igual se documenta, solo no se muestra versión. |
+| `environments` | array | No | Reservado para uso futuro (p. ej. distinguir despliegues dev/staging/prod). El hub no lo lee todavía — si tu proyecto no lo necesita, dejalo como `[]`. |
+
+**Reglas de escritura** (para que no se vuelva "lo que cada quien quiera poner"):
+- No inventes claves alternativas (`model_name`, `ver`, `modelos`, etc.) — el hub busca exactamente
+  `models`, `name`, `version`. Un typo no rompe el build, pero hace que el modelo desaparezca en
+  silencio del dashboard hasta que alguien note el log de advertencia.
+- El orden de los modelos en el array es el orden en que se muestran en el detalle del proyecto.
+- No agregues campos propios al objeto de cada modelo salvo que también actualices
+  `scripts/aggregate.py` para leerlos — si no, quedan ahí sin efecto y confunden a quien lea el
+  archivo después.
+
+`scripts/aggregate.py::leer_mlops_config()` valida esto en cada build: si el JSON es inválido, si
+falta `models`, o si un modelo no trae `name`, lo dice explícitamente en el log del workflow en vez
+de fallar en silencio.
 
 ## ¿De dónde sale cada cosa que se muestra en el dashboard?
 

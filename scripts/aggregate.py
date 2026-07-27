@@ -102,16 +102,37 @@ def listar_docs(full_name: str, path: str = "docs", ref: str = "develop") -> lis
 def leer_mlops_config(full_name: str) -> list[dict]:
     """Lee ``config/mlops_config.json`` para obtener los modelos del proyecto.
 
+    Valida el contrato mínimo (ver ``setup/README.md``) en vez de fallar en silencio: un modelo
+    sin ``name`` no se puede mapear a su carpeta ``docs/<name>/`` y se descarta con un aviso, en
+    vez de producir una entrada rota que confunda por qué "no aparecen modelos".
+
     :param full_name: ``owner/repo``.
-    :returns: Lista de ``{"name": ..., "version": ...}``, vacía si el repo no tiene el archivo.
+    :returns: Lista de ``{"name": ..., "version": ...}`` válidos; vacía si el repo no tiene el
+        archivo, tiene JSON inválido, o no trae la clave ``models``.
     """
     contenido = bajar(full_name, "config/mlops_config.json")
     if not contenido:
         return []
     try:
-        return json.loads(contenido).get("models", []) or []
-    except json.JSONDecodeError:
+        data = json.loads(contenido)
+    except json.JSONDecodeError as e:
+        print(f"  ⚠ {full_name}: config/mlops_config.json inválido ({e}) — se ignora")
         return []
+
+    if "models" not in data:
+        print(f"  ⚠ {full_name}: config/mlops_config.json no tiene la clave 'models' — se ignora")
+        return []
+
+    modelos = []
+    for i, m in enumerate(data.get("models") or []):
+        nombre = m.get("name")
+        if not nombre:
+            print(f"  ⚠ {full_name}: models[{i}] sin 'name' válido — se omite")
+            continue
+        if not m.get("version"):
+            print(f"  ⚠ {full_name}: modelo '{nombre}' sin 'version' — se documenta igual")
+        modelos.append(m)
+    return modelos
 
 
 def tiene_release(full_name: str) -> bool:
