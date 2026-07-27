@@ -224,3 +224,83 @@ tintado — más peso visual, patrón estándar de badge de status.
 
 Todo verificado con Playwright (clics reales) en producción: grid de 4 columnas con 8 proyectos
 simulados, 3 columnas reales con los 3 proyectos reales, cero errores de consola.
+
+## 15. Un repo = un proyecto con N modelos (2026-07-27)
+
+Cambio de arquitectura real: hasta acá el hub asumía **1 repo = 1 modelo**. En la práctica un repo
+de proyecto puede correr **varios modelos independientes** (ej. distintos segmentos de la cartera,
+orquestados por el mismo pipeline de negocio). Luis confirmó con una captura real de
+`config/mlops_config.json` (formato `{"models":[{"name","version"}],"environments":[]}`) que ese
+archivo, en la raíz del repo, es la fuente de verdad de qué modelos tiene un proyecto.
+
+**Decisión de esquema**: por cada modelo listado en `config/mlops_config.json`, su documentación
+completa (`model-card.md`, `lineage.md`, `functions.md`, `model_data.json`) vive en
+`docs/<nombre_modelo>/` — ya no en la raíz de `docs/`. El `README.md` (o `README_info.md`) en la
+raíz del repo pasa a describir el **proyecto** (por qué existen esos modelos, qué problema de
+negocio resuelven en conjunto), no un modelo puntual — esa narrativa vive en el `model-card.md` de
+cada uno.
+
+**Descubrimiento multi-prefijo**: se reemplazó el prefijo único `kc-` (POC) por una lista
+configurable (`KC_PREFIXES`, default `coaa_,coeaa_` — la convención real de nombres). Además, el
+nombre del repo **ya no se recorta** al mostrarlo (antes se le quitaba el prefijo para el `slug`) —
+Luis fue explícito: el dashboard debe mostrar el nombre completo tal cual está en GitHub.
+
+**Cambios en `scripts/aggregate.py`**:
+- `PREFIX` (str) → `PREFIXES` (tupla), `listar_repos()` filtra con `startswith(PREFIXES)`.
+- `slug = repo["name"]` completo, sin recorte.
+- Nueva `leer_mlops_config()`: lee `config/mlops_config.json`, devuelve la lista de modelos.
+- Nueva `resumen_proyecto()`: lee `README.md`/`README_info.md` raíz (en ese orden) como narrativa
+  del proyecto — distinta de `extraer_resumen()`, que sigue leyendo las secciones narrativas de un
+  `model-card.md` puntual.
+- Nueva `procesar_modelo(full, slug, modelo_cfg)`: hace, por modelo, lo que antes hacía `procesar()`
+  para todo el repo — copia sus docs a `docs/<slug>/<modelo>/`, lee su propio `model_data.json`,
+  calcula su propia completitud (sobre los mismos 3 archivos esperados) y extrae su propia
+  narrativa.
+- `procesar(repo)` ahora orquesta: llama `procesar_modelo()` por cada entrada de la config, agrega
+  `n_modelos`, `modelos_completos` (cuántos llegan a 100%) y `completitud_promedio`; `estado` e
+  `historial` siguen siendo de nivel proyecto (releases/tags y commits a `docs/`, sin cambios en el
+  mecanismo).
+
+**Esquema del catálogo** — de plano (un modelo por entrada) pasó a anidado:
+```
+{ slug, nombre, area, repo_url, resumen_proyecto, n_modelos, modelos_completos,
+  completitud_promedio, estado, historial, modelos: [
+    { nombre, version, algoritmo, flavour, auc, features, n_tablas, completitud,
+      docs_presentes, resumen_proposito, resumen_como_funciona, sources, doc_url }, ...
+  ] }
+```
+
+**Dashboard (`Card`)**: ya no muestra chips de un solo modelo (algo/AUC/features/tablas). Muestra
+agregados del proyecto — "N modelos" y "X/N con doc completa" — más una fila de badges, uno por
+modelo, con un punto de color según su propia completitud (verde=100%, ámbar=parcial,
+gris=sin documentar). El nombre completo del repo (con prefijo) es el título de la card.
+
+**Detalle (`ProjectDetail`)**: "¿Qué es este proyecto?" ahora renderiza el README raíz (texto libre,
+con un parser mínimo de encabezados/párrafos — se omite el `# título` inicial para no repetir el
+`<h1>` de la página). Se agregó una sección "Modelos (N)" que repite, por cada modelo, su propio
+bloque de narrativa + métricas + checklist de documentación + linaje — cada modelo enlaza a su
+propio `model-card.md` en `/docs/<slug>/<modelo>/model-card`.
+
+**Repo demo para probar el cambio de punta a punta**: se creó `coaa_pyneg_demo_activos`
+(privado, en `luxitoppsai`) con 3 modelos en 3 estados de completitud distintos (100%/33%/0%),
+usando exactamente la estructura real (`config/mlops_config.json` con los mismos nombres de la
+captura de Luis). Corriendo `aggregate.py` contra el repo real vía la API de GitHub, el catálogo
+resultante fue el esperado: 3 modelos, 1/3 completo, 44% de completitud promedio.
+
+Verificado con Playwright (clics reales, ambos temas): dashboard muestra el proyecto con sus 3
+badges de modelo; clic en "Ver detalle" navega a `/proyecto/coaa_pyneg_demo_activos`; cada modelo
+muestra su propio bloque; clic en "Model Card" del modelo completo navega a
+`/docs/coaa_pyneg_demo_activos/fv_RandomForestSet_bestModel/model-card`. Cero errores de consola.
+
+**Documentación actualizada**: `README.md`, `CONTRIBUTING.md` y `setup/README.md` (contrato,
+checklist de integración y tabla "de dónde sale cada dato", ahora separada por nivel
+proyecto/modelo) reflejan el nuevo esquema. Los ejemplos de `setup/docs-example/` se movieron a
+`setup/docs-example/modelo_ejemplo/` para reflejar el anidado real; se agregó
+`setup/mlops_config.json.example`.
+
+**Deuda pendiente, no bloqueante**: `knowledge-center-template` y `knowledge-center-autodoc`
+todavía generan/asumen la estructura vieja (un modelo por repo, prefijo `kc-`) — hay que
+actualizarlos para que el flujo de creación de repos nuevos coincida con este esquema. Los repos
+demo viejos (`kc-scoring-admision-pyme`, `kc-churn-de-tarjetas`,
+`kc-deteccion-de-fraude-tarjetas`) quedan indescubribles con el nuevo prefijo — evaluar si
+migrarlos o retirarlos cuando se toque el template.

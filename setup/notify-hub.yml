@@ -13,8 +13,10 @@ on:
     branches: [develop]
     paths:
       - "docs/**"
-      - "model_data.json"
+      - "config/mlops_config.json"
       - "project.yaml"
+      - "README.md"
+      - "README_info.md"
 
 jobs:
   notify:

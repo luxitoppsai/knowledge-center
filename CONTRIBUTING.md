@@ -20,6 +20,7 @@ npm start   # dev server, hot-reload, usa el catalog.json que ya esté en src/da
 **Probar el agregador** (`scripts/aggregate.py`) de punta a punta:
 ```bash
 export KC_OWNER=tu-usuario
+export KC_PREFIXES="coaa_,coeaa_"   # opcional — es el default
 python scripts/aggregate.py
 npm run build && npm run serve
 ```

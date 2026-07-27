@@ -20,12 +20,17 @@ function Stat({valor, label}) {
   );
 }
 
-function Chip({k, v}) {
-  if (v === null || v === undefined || v === '') return null;
+function dotClaseCompletitud(completitud) {
+  if (completitud === 100) return styles.dotGreen;
+  if (completitud > 0) return styles.dotAmber;
+  return styles.dotSlate;
+}
+
+function ModeloBadge({m}) {
   return (
-    <span className={styles.chip}>
-      <span className={styles.chipK}>{k}</span>
-      <span className={styles.chipV}>{v}</span>
+    <span className={styles.modeloBadge} title={`${m.nombre} · ${m.completitud}% documentado`}>
+      <span className={`${styles.dot} ${dotClaseCompletitud(m.completitud)}`} />
+      {m.nombre}
     </span>
   );
 }
@@ -36,13 +41,13 @@ function Card({p}) {
   return (
     <article className={styles.card}>
       <div className={styles.cardHead}>
-        <ProgressRing value={p.completitud} size={46} color={est.ring} />
+        <ProgressRing value={p.completitud_promedio} size={46} color={est.ring} />
         <div className={styles.cardHeadText}>
           <div className={styles.cardTop}>
             <span className={`${styles.pill} ${est.pill}`}>
               <span className={`${styles.dot} ${est.dot}`} /> {est.label}
             </span>
-            <span className={styles.area}>{p.area}</span>
+            {p.area && <span className={styles.area}>{p.area}</span>}
           </div>
           <h3 className={styles.cardTitle}>
             <a href={detalleHref} className={styles.cardTitleLink}>{p.nombre}</a>
@@ -50,11 +55,21 @@ function Card({p}) {
         </div>
       </div>
 
-      <div className={styles.chips}>
-        <Chip k="algo" v={p.algoritmo} />
-        <Chip k="AUC" v={typeof p.auc === 'number' ? p.auc.toFixed(3) : null} />
-        <Chip k="features" v={p.features} />
-        <Chip k="tablas" v={p.n_tablas} />
+      <div className={styles.cardStats}>
+        <div className={styles.cardStat}>
+          <span className={styles.cardStatValue}>{p.n_modelos}</span>
+          <span className={styles.cardStatLabel}>{p.n_modelos === 1 ? 'modelo' : 'modelos'}</span>
+        </div>
+        <div className={styles.cardStat}>
+          <span className={styles.cardStatValue}>{p.modelos_completos}/{p.n_modelos}</span>
+          <span className={styles.cardStatLabel}>con doc completa</span>
+        </div>
+      </div>
+
+      <div className={styles.modelos}>
+        {p.modelos.map((m) => (
+          <ModeloBadge key={m.nombre} m={m} />
+        ))}
       </div>
 
       <div className={styles.links}>
@@ -73,7 +88,7 @@ export default function Home() {
   const filtrados = catalog.filter(
     (p) => (!area || p.area === area) && (!estado || p.estado === estado),
   );
-  const completos = catalog.filter((p) => p.completitud === 100).length;
+  const completos = catalog.filter((p) => p.completitud_promedio === 100).length;
   const enProd = catalog.filter((p) => p.estado === 'produccion').length;
 
   return (

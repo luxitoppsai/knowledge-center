@@ -1,4 +1,4 @@
-.page { max-width: 980px; margin: 0 auto; padding: 2.4rem 1rem 5rem; }
+.page { max-width: 1180px; margin: 0 auto; padding: 2.4rem 1rem 5rem; }
 
 .breadcrumb { font-size: 0.85rem; color: var(--kc-muted); margin-bottom: 1.4rem; }
 .breadcrumb a { color: var(--kc-cyan); text-decoration: none; }
@@ -14,8 +14,9 @@
 .area { margin-left: auto; color: var(--kc-muted); font-family: var(--ifm-font-family-monospace); }
 .title {
   font-family: var(--ifm-heading-font-family);
-  font-size: clamp(1.7rem, 3.6vw, 2.3rem); font-weight: 800; letter-spacing: -0.015em; margin: 0 0 1.1rem;
+  font-size: clamp(1.7rem, 3.6vw, 2.3rem); font-weight: 800; letter-spacing: -0.015em; margin: 0 0 0.4rem;
 }
+.headSub { color: var(--kc-muted); font-size: 0.9rem; margin: 0 0 1.1rem; font-variant-numeric: tabular-nums; }
 
 .actions { display: flex; gap: 0.7rem; }
 .btnPrimary {
@@ -44,9 +45,20 @@
   background: var(--kc-chip-bg); color: var(--kc-cyan); padding: 0.1rem 0.4rem; border-radius: 6px;
 }
 
+.modelosGrid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 1.3rem; margin-bottom: 1.8rem;
+}
+.modeloHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; margin-bottom: 0.8rem; flex-wrap: wrap; }
+.modeloTitle {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.98rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem;
+}
+.modeloVersion { font-size: 0.76rem; color: var(--kc-muted); white-space: nowrap; }
+
 .metrics {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.8rem; margin-bottom: 2rem;
+  gap: 0.8rem; margin-bottom: 1.4rem;
 }
 .metric {
   background: var(--kc-surface); border: 1px solid var(--kc-border); border-radius: var(--kc-radius-md);

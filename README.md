@@ -9,10 +9,15 @@ navegable, filtros, semáforo de estado y el Model Card de cada proyecto.
 ## La idea en un párrafo
 
 Este repo **no almacena documentación**. Es una **vista computada**: en cada build, descubre los
-repos de proyecto (por prefijo `kc-*`), lee lo que tienen *ahora mismo* (qué archivos de doc
-existen, si tienen releases, qué dice su `model_data.json`), arma el catálogo, y publica. Nada se
-copia de forma permanente ni queda desactualizado — el build de mañana refleja el estado de mañana.
-Ver [`RFC.md`](RFC.md) del proyecto para el contrato completo y la bitácora de decisiones.
+repos de proyecto (por prefijo `coaa_*`/`coeaa_*`), lee lo que tienen *ahora mismo* (qué archivos
+de doc existen por modelo, si tienen releases, qué dice cada `model_data.json`), arma el catálogo,
+y publica. Nada se copia de forma permanente ni queda desactualizado — el build de mañana refleja
+el estado de mañana. Ver [`RFC.md`](RFC.md) del proyecto para el contrato completo y la bitácora de
+decisiones.
+
+**Un repo es un proyecto, y un proyecto puede tener varios modelos.** `config/mlops_config.json`
+(raíz del repo) lista los modelos; cada uno documenta por separado en `docs/<nombre_modelo>/`. El
+`README.md` raíz describe el proyecto; cada `docs/<modelo>/model-card.md` describe un modelo.
 
 ## El ecosistema (4 repos)
 
@@ -31,8 +36,9 @@ para el contrato exacto y cómo integrar un repo manualmente (sin pasar por el t
 
 ```mermaid
 graph TD
-  subgraph "Repos de proyecto (kc-*)"
-    D["docs/model-card.md<br/>docs/lineage.md<br/>docs/functions.md<br/>model_data.json"]
+  subgraph "Repos de proyecto (coaa_*/coeaa_*)"
+    CFG["config/mlops_config.json<br/>(lista de modelos)"]
+    D["docs/&lt;modelo&gt;/model-card.md<br/>docs/&lt;modelo&gt;/lineage.md<br/>docs/&lt;modelo&gt;/functions.md<br/>docs/&lt;modelo&gt;/model_data.json"]
     N["notify-hub.yml<br/>(push a develop)"]
   end
   subgraph "knowledge-center"
@@ -43,6 +49,7 @@ graph TD
   PAGES["GitHub Pages"]
 
   N -- "repository_dispatch" --> AGG
+  CFG -. "GitHub API (pull)" .-> AGG
   D -. "GitHub API (pull)" .-> AGG
   AGG --> CAT --> SITE --> PAGES
 ```
@@ -80,8 +87,9 @@ knowledge-center/
 npm install
 pip install requests
 
-# 1. Agregar el catálogo real (necesita un token con acceso a tus repos kc-*)
+# 1. Agregar el catálogo real (necesita un token con acceso a tus repos coaa_*/coeaa_*)
 export KC_OWNER=tu-usuario-github
+export KC_PREFIXES="coaa_,coeaa_"   # opcional — es el default
 python scripts/aggregate.py     # usa `gh auth token` si no exportás GITHUB_TOKEN
 
 # 2. Levantar el sitio

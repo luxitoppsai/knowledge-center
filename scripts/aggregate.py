@@ -1,13 +1,17 @@
 """Agregación del Knowledge Center (vista computada).
 
-Descubre los repos de proyecto (prefijo ``kc-``), y de CADA uno **deriva en vivo**:
-- copia sus ``docs/*.md`` a ``docs/<slug>/`` (insumo temporal del build, no se versiona),
-- calcula el catálogo: metadata (project.yaml), métricas (model_data.json), completitud de docs,
-  y estado (por tags/releases) → ``static/catalog.json``.
+Descubre los repos de proyecto (prefijos ``coaa_``/``coeaa_``). Cada repo es un **proyecto** que
+puede contener **varios modelos** (listados en ``config/mlops_config.json``). De CADA proyecto
+**deriva en vivo**:
+- copia la doc de cada modelo (``docs/<modelo>/*.md``) a ``docs/<slug>/<modelo>/`` (insumo
+  temporal del build, no se versiona),
+- calcula el catálogo: metadata por modelo (``docs/<modelo>/model_data.json``), completitud de
+  docs por modelo, resumen del proyecto (``README.md``/``README_info.md`` raíz), y estado del
+  proyecto (por tags/releases) → ``static/catalog.json``.
 
 Nada se almacena permanentemente: en cada build se re-deriva del estado actual de los repos.
 
-Auth: ``GITHUB_TOKEN`` (CI) o ``gh auth token`` (local). Owner/prefijo por entorno.
+Auth: ``GITHUB_TOKEN`` (CI) o ``gh auth token`` (local). Owner/prefijos por entorno.
 """
 
 from __future__ import annotations
@@ -27,7 +31,9 @@ CATALOG = RAIZ / "src" / "data" / "catalog.json"
 
 API = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
 OWNER = os.environ.get("KC_OWNER", "luxitoppsai")
-PREFIX = os.environ.get("KC_PREFIX", "kc-")
+PREFIXES = tuple(
+    p.strip() for p in os.environ.get("KC_PREFIXES", "coaa_,coeaa_").split(",") if p.strip()
+)
 DOCS_ESPERADOS = ["model-card", "lineage", "functions"]
 
 
@@ -49,6 +55,7 @@ def listar_repos() -> list[dict]:
 
     Usa ``/user/repos`` (requiere que el token pertenezca al propio ``OWNER``) para ver repos
     privados; cae a ``/users/{owner}/repos`` (solo públicos) si el owner no coincide con el token.
+    Descubre por CUALQUIERA de los prefijos en ``PREFIXES`` (``coaa_``, ``coeaa_``).
     """
     repos, page = [], 1
     while True:
@@ -59,7 +66,10 @@ def listar_repos() -> list[dict]:
         lote = r.json()
         if not lote:
             break
-        repos += [x for x in lote if x["name"].startswith(PREFIX) and x["owner"]["login"] == OWNER]
+        repos += [
+            x for x in lote
+            if x["name"].startswith(PREFIXES) and x["owner"]["login"] == OWNER
+        ]
         if len(lote) < 100:
             break
         page += 1
@@ -80,13 +90,28 @@ def bajar(full_name: str, path: str, ref: str = "develop") -> str | None:
     return None
 
 
-def listar_docs(full_name: str, ref: str = "develop") -> list[str]:
-    r = _get(f"{API}/repos/{full_name}/contents/docs", params={"ref": ref})
+def listar_docs(full_name: str, path: str = "docs", ref: str = "develop") -> list[str]:
+    r = _get(f"{API}/repos/{full_name}/contents/{path}", params={"ref": ref})
     if r.status_code != 200:
-        r = _get(f"{API}/repos/{full_name}/contents/docs")
+        r = _get(f"{API}/repos/{full_name}/contents/{path}")
     if r.status_code != 200:
         return []
     return [f["name"] for f in r.json() if f["name"].endswith(".md")]
+
+
+def leer_mlops_config(full_name: str) -> list[dict]:
+    """Lee ``config/mlops_config.json`` para obtener los modelos del proyecto.
+
+    :param full_name: ``owner/repo``.
+    :returns: Lista de ``{"name": ..., "version": ...}``, vacía si el repo no tiene el archivo.
+    """
+    contenido = bajar(full_name, "config/mlops_config.json")
+    if not contenido:
+        return []
+    try:
+        return json.loads(contenido).get("models", []) or []
+    except json.JSONDecodeError:
+        return []
 
 
 def tiene_release(full_name: str) -> bool:
@@ -177,6 +202,20 @@ def extraer_resumen(model_card_md: str | None) -> dict[str, str | None]:
     return resumen
 
 
+def resumen_proyecto(full_name: str) -> str | None:
+    """Lee el ``README.md``/``README_info.md`` raíz como descripción del proyecto (no de un
+    modelo). Es texto libre escrito por el equipo dueño del repo, no se reformatea.
+
+    :param full_name: ``owner/repo``.
+    :returns: Contenido del README raíz, o ``None`` si no existe ninguno de los dos.
+    """
+    for nombre in ("README_info.md", "README.md"):
+        contenido = bajar(full_name, nombre)
+        if contenido:
+            return contenido.strip()
+    return None
+
+
 def _auc(meta: dict) -> float | None:
     for m in meta.get("models", []) or []:
         for ev in (((m.get("metrics") or {}).get("test") or {}).get("evaluation_metrics_data") or []):
@@ -186,49 +225,51 @@ def _auc(meta: dict) -> float | None:
     return None
 
 
-def procesar(repo: dict) -> dict:
-    full = repo["full_name"]
-    slug = repo["name"][len(PREFIX):] if repo["name"].startswith(PREFIX) else repo["name"]
+def procesar_modelo(full: str, slug: str, modelo_cfg: dict) -> dict:
+    """Deriva el catálogo de UN modelo dentro de un proyecto.
 
-    # copiar docs al árbol de Docusaurus
-    destino = DOCS / slug
+    Copia su documentación a ``docs/<slug>/<modelo>/`` y lee sus métricas propias
+    (``docs/<modelo>/model_data.json``) — cada modelo es independiente del resto.
+
+    :param full: ``owner/repo`` del proyecto dueño del modelo.
+    :param slug: Slug del proyecto (nombre completo del repo, sin recortar prefijo).
+    :param modelo_cfg: Entrada de ``config/mlops_config.json`` (``{"name", "version"}``).
+    :returns: Catálogo del modelo.
+    """
+    nombre_modelo = modelo_cfg.get("name", "")
+    ruta_docs = f"docs/{nombre_modelo}"
+    destino = DOCS / slug / nombre_modelo
     destino.mkdir(parents=True, exist_ok=True)
+
     presentes = []
     model_card_md = None
-    for nombre in listar_docs(full):
-        contenido = bajar(full, f"docs/{nombre}")
+    for nombre in listar_docs(full, path=ruta_docs):
+        if nombre == "model_data.json":
+            continue
+        contenido = bajar(full, f"{ruta_docs}/{nombre}")
         if contenido:
             (destino / nombre).write_text(contenido, encoding="utf-8")
             presentes.append(Path(nombre).stem)
             if nombre == "model-card.md":
                 model_card_md = contenido
 
-    # metadata
-    py = _parse_yaml_simple(bajar(full, "project.yaml") or "")
-    md_raw = bajar(full, "model_data.json")
+    md_raw = bajar(full, f"{ruta_docs}/model_data.json")
     meta = json.loads(md_raw) if md_raw else {}
     m0 = (meta.get("models") or [{}])[0]
 
     completos = [d for d in DOCS_ESPERADOS if d in presentes]
     completitud = round(100 * len(completos) / len(DOCS_ESPERADOS))
-    con_release = tiene_release(full)
-    estado = "produccion" if con_release else ("desarrollo" if presentes else "nuevo")
-    eventos = historial(full)
     resumen = extraer_resumen(model_card_md)
 
-    # categoría para el sidebar de Docusaurus
     (destino / "_category_.json").write_text(
-        json.dumps({"label": py.get("name", slug), "position": 1}, ensure_ascii=False),
+        json.dumps({"label": nombre_modelo, "position": 1}, ensure_ascii=False),
         encoding="utf-8",
     )
 
     return {
-        "slug": slug,
-        "nombre": py.get("name", slug),
-        "area": py.get("area") or meta.get("area"),
-        "tipo_modelo": py.get("tipo_modelo"),
-        "repo_url": repo["html_url"],
-        "doc_url": f"/docs/{slug}/model-card" if "model-card" in presentes else None,
+        "nombre": nombre_modelo,
+        "version": modelo_cfg.get("version"),
+        "doc_url": f"/docs/{slug}/{nombre_modelo}/model-card" if "model-card" in presentes else None,
         "algoritmo": m0.get("algorithm_name"),
         "flavour": m0.get("flavour"),
         "features": ((m0.get("features") or {}).get("feature_count")),
@@ -236,12 +277,8 @@ def procesar(repo: dict) -> dict:
         "n_tablas": len((meta.get("sources") or {}).get("table_list") or []),
         "docs_presentes": presentes,
         "completitud": completitud,
-        "estado": estado,
         "resumen_proposito": resumen["proposito"],
         "resumen_como_funciona": resumen["como_funciona"],
-        "actualizado": repo.get("pushed_at"),
-        "creado": repo.get("created_at"),
-        "historial": eventos,
         "docs_esperados": DOCS_ESPERADOS,
         "sources": {
             "dataset_info": (meta.get("sources") or {}).get("dataset_info") or {},
@@ -250,15 +287,60 @@ def procesar(repo: dict) -> dict:
     }
 
 
+def procesar(repo: dict) -> dict:
+    """Deriva el catálogo de UN proyecto (repo), agregando todos sus modelos.
+
+    :param repo: Objeto de repo devuelto por la API de GitHub.
+    :returns: Catálogo del proyecto con la lista de modelos anidada.
+    """
+    full = repo["full_name"]
+    slug = repo["name"]  # nombre completo, sin recortar el prefijo (coaa_/coeaa_)
+
+    py = _parse_yaml_simple(bajar(full, "project.yaml") or "")
+    modelos_cfg = leer_mlops_config(full)
+    modelos = [procesar_modelo(full, slug, m) for m in modelos_cfg]
+
+    # categoría raíz del proyecto para el sidebar de Docusaurus
+    destino = DOCS / slug
+    destino.mkdir(parents=True, exist_ok=True)
+    (destino / "_category_.json").write_text(
+        json.dumps({"label": py.get("name", slug), "position": 1}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    con_release = tiene_release(full)
+    tiene_docs = any(m["docs_presentes"] for m in modelos)
+    estado = "produccion" if con_release else ("desarrollo" if tiene_docs else "nuevo")
+    eventos = historial(full)
+    completitudes = [m["completitud"] for m in modelos]
+    completitud_promedio = round(sum(completitudes) / len(completitudes)) if completitudes else 0
+
+    return {
+        "slug": slug,
+        "nombre": py.get("name", slug),
+        "area": py.get("area"),
+        "repo_url": repo["html_url"],
+        "resumen_proyecto": resumen_proyecto(full),
+        "n_modelos": len(modelos),
+        "modelos_completos": sum(1 for m in modelos if m["completitud"] == 100),
+        "completitud_promedio": completitud_promedio,
+        "estado": estado,
+        "actualizado": repo.get("pushed_at"),
+        "creado": repo.get("created_at"),
+        "historial": eventos,
+        "modelos": modelos,
+    }
+
+
 def main() -> None:
     repos = listar_repos()
-    print(f"Descubiertos {len(repos)} repos '{PREFIX}*'")
+    print(f"Descubiertos {len(repos)} repos {PREFIXES}")
     catalogo = [procesar(r) for r in repos]
-    catalogo.sort(key=lambda c: (-(c["completitud"] or 0), c["nombre"]))
+    catalogo.sort(key=lambda c: (-(c["completitud_promedio"] or 0), c["nombre"]))
     CATALOG.parent.mkdir(parents=True, exist_ok=True)
     CATALOG.write_text(json.dumps(catalogo, ensure_ascii=False, indent=2), encoding="utf-8")
     for c in catalogo:
-        print(f"  · {c['nombre']}: {c['completitud']}% · {c['estado']} · AUC {c['auc']}")
+        print(f"  · {c['nombre']}: {c['n_modelos']} modelos · {c['completitud_promedio']}% · {c['estado']}")
     print(f"Catálogo: {CATALOG} ({len(catalogo)} proyectos)")
 
 

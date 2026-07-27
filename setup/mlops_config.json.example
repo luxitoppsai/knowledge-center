@@ -1,0 +1,6 @@
+{
+  "models": [
+    { "name": "modelo_ejemplo", "version": "1" }
+  ],
+  "environments": []
+}

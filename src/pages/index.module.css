@@ -86,14 +86,24 @@
 .cardTitleLink { color: var(--kc-ink); text-decoration: none; }
 .cardTitleLink:hover { color: var(--kc-cyan); text-decoration: none; }
 
-.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.1rem; }
-.chip {
+.cardStats { display: flex; gap: 1.6rem; margin-bottom: 0.9rem; }
+.cardStat { display: flex; flex-direction: column; }
+.cardStatValue {
+  font-family: var(--ifm-heading-font-family);
+  font-size: 1.25rem; font-weight: 700; color: var(--kc-ink);
+  font-variant-numeric: tabular-nums;
+}
+.cardStatLabel { color: var(--kc-muted); font-size: 0.72rem; }
+
+.modelos { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.1rem; }
+.modeloBadge {
   display: inline-flex; align-items: center; gap: 0.35rem;
   background: var(--kc-chip-bg); border: 1px solid var(--kc-border);
-  border-radius: var(--kc-radius-sm); padding: 0.2rem 0.5rem; font-size: 0.74rem;
+  border-radius: var(--kc-radius-sm); padding: 0.2rem 0.55rem; font-size: 0.72rem;
+  color: var(--kc-ink); max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--ifm-font-family-monospace);
 }
-.chipK { color: var(--kc-muted); font-family: var(--ifm-font-family-monospace); }
-.chipV { color: var(--kc-ink); font-weight: 600; }
 
 .links { display: flex; gap: 0.6rem; }
 .btnPrimary {
