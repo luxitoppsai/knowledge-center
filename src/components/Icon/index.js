@@ -58,6 +58,28 @@ const paths = {
       <path d="M12 8v5M12 16.2h.01" />
     </>
   ),
+  // Ciclo de vida (neutro, sin color): nuevo = círculo punteado, desarrollo = medio, producción = lleno
+  nuevo: (
+    <circle cx="12" cy="12" r="7.5" strokeDasharray="2.6 2.6" />
+  ),
+  desarrollo: (
+    <>
+      <circle cx="12" cy="12" r="7.5" />
+      <path d="M12 4.5a7.5 7.5 0 0 1 0 15Z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  produccion: (
+    <>
+      <circle cx="12" cy="12" r="7.5" />
+      <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="10.5" cy="10.5" r="6" />
+      <path d="m15 15 5 5" />
+    </>
+  ),
   // Linaje global: grafo tablas → modelos
   graph: (
     <>
@@ -75,11 +97,11 @@ const paths = {
   ),
 };
 
-export default function Icon({ name, className }) {
+export default function Icon({ name, className, style }) {
   const p = paths[name];
   if (!p) return null;
   return (
-    <svg {...base} className={className} aria-hidden="true">
+    <svg {...base} className={className} style={style} aria-hidden="true">
       {p}
     </svg>
   );

@@ -117,3 +117,12 @@ a.celda:hover { filter: brightness(1.12); text-decoration: none; outline: 2px so
   a:not(.celda) { color: inherit !important; text-decoration: none !important; }
   .celda, .barra { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* aviso de calidad de datos (RFC-003 R15): ámbar = "atención", con ícono + texto */
+.aviso {
+  display: flex; gap: 0.55rem; align-items: flex-start; margin: 0 0 1.2rem;
+  border: 1px solid var(--kc-border); border-left: 3px solid var(--kc-amber);
+  border-radius: var(--kc-radius-md); background: var(--kc-surface);
+  padding: 0.65rem 0.9rem; font-size: 0.86rem; color: var(--kc-ink);
+}
+.aviso svg { color: var(--kc-amber); margin-top: 0.15rem; }

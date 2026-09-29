@@ -80,7 +80,10 @@ en el catálogo (ver arriba) para no descubrir en producción que algo solo se v
   que fuerza la paleta clara (el papel es blanco aunque el tema sea oscuro). Si agregás un color
   nuevo, definilo como token en los tres bloques, no lo hardcodees en un módulo CSS.
 - **Colores de estado reservados**: verde/ámbar/rojo (`--kc-green|amber|red`) significan
-  saludable/atención/crítico y nada más. Siempre acompañados de ícono + etiqueta o puntaje, nunca
+  saludable/atención/crítico y nada más. El ciclo de vida (producción/desarrollo/nuevo) va
+  **neutro** con `EstadoTag` (ícono + etiqueta): si también se pintara, un mismo verde
+  significaría dos cosas en la misma card (RFC-003). El test de Playwright de RFC-003 recorre
+  las cards y falla si aparece un color de salud fuera de un indicador de salud. Siempre acompañados de ícono + etiqueta o puntaje, nunca
   el color solo. Magnitudes (conteos, heatmaps) usan la rampa secuencial `--kc-seq-1..4`; si la
   cambiás, re-validala con el validador de la skill `dataviz` contra las superficies del sitio.
 - **Estado leído de la URL** (`?area=`, `?tabla=`): aplicalo **después de hidratar**

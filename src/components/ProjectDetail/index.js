@@ -1,20 +1,15 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import {useLocation} from '@docusaurus/router';
 import Icon from '@site/src/components/Icon';
+import EstadoTag from '@site/src/components/EstadoTag';
 import {SaludBadge, SaludDetalle} from '@site/src/components/Salud';
+import {NIVELES} from '@site/src/lib/salud';
+import {describirEvento} from '@site/src/lib/eventos';
 import styles from './styles.module.css';
 
-const ESTADOS = {
-  produccion: {label: 'Producción', cls: styles.dotGreen},
-  desarrollo: {label: 'Desarrollo', cls: styles.dotAmber},
-  nuevo: {label: 'Nuevo', cls: styles.dotSlate},
-};
-
-/**
- * Renderiza markdown inline mínimo (**negrita**, `código`) sin traer una librería de markdown
- * completa — la narrativa del Model Card solo usa estos dos, generados por la plantilla/skill.
- */
+/** Markdown inline mínimo (**negrita**, `código`): la narrativa solo usa esos dos. */
 function renderInlineMd(texto) {
   const partes = texto.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).filter(Boolean);
   return partes.map((p, i) => {
@@ -24,39 +19,9 @@ function renderInlineMd(texto) {
   });
 }
 
-/**
- * Renderiza el README raíz del proyecto (texto libre del equipo dueño, no generado): encabezados
- * ``#``/``##`` como títulos, el resto como párrafos con inline mínimo. No es un parser de markdown
- * completo — alcanza para READMEs simples de propósito.
- */
-function renderResumenProyecto(md) {
-  let bloques = md.split(/\n\n+/).filter(Boolean);
-  // el "# título" inicial del README solo repite el nombre del proyecto (ya está en el <h1> de
-  // la página) — se omite para no mostrar un heading redundante.
-  if (/^#\s+\S/.test(bloques[0])) bloques = bloques.slice(1);
-  return bloques.map((bloque, i) => {
-    const m = bloque.match(/^(#{1,6})\s+(.*)$/);
-    if (m) {
-      const Tag = m[1].length === 1 ? 'h3' : 'h4';
-      return <Tag key={i} className={styles.summarySubTitle}>{renderInlineMd(m[2])}</Tag>;
-    }
-    return <p key={i} className={styles.summaryText}>{renderInlineMd(bloque.replace(/\n/g, ' '))}</p>;
-  });
-}
-
 function fmtFecha(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('es-PE', {year: 'numeric', month: 'short', day: 'numeric'});
-}
-
-function Metric({label, value}) {
-  if (value === null || value === undefined) return null;
-  return (
-    <div className={styles.metric}>
-      <div className={styles.metricValue}>{value}</div>
-      <div className={styles.metricLabel}>{label}</div>
-    </div>
-  );
+  return new Date(iso).toLocaleDateString('es-PE', {year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC'});
 }
 
 const DOCS_META = {
@@ -68,190 +33,228 @@ const DOCS_META = {
 function DocCheck({projectSlug, modeloNombre, doc, presente}) {
   const meta = DOCS_META[doc] || {label: doc, icon: 'doc'};
   const href = useBaseUrl(`/docs/${projectSlug}/${modeloNombre}/${doc}`);
-  if (presente) {
-    return (
-      <li className={styles.docOk}>
-        <span className={styles.docIcon}>✓</span>
-        <Icon name={meta.icon} className={styles.docTypeIcon} />
-        <a className={styles.docLink} href={href}>{meta.label}</a>
-      </li>
-    );
-  }
   return (
-    <li className={styles.docMissing}>
-      <span className={styles.docIcon}>○</span>
-      <Icon name={meta.icon} className={styles.docTypeIcon} />
-      {meta.label} <span className={styles.docPendingTag}>pendiente</span>
+    <li className={presente ? styles.docOk : styles.docMissing}>
+      <Icon name={meta.icon} className={styles.docIcono} />
+      {presente ? <a href={href}>{meta.label}</a> : <span>{meta.label}</span>}
+      {!presente && <span className={styles.docPendiente}>falta</span>}
     </li>
   );
 }
 
-const ESTADO_MODELO = {
-  100: {label: 'Completo', cls: styles.dotGreen},
-  0: {label: 'Sin documentar', cls: styles.dotSlate},
-};
-
-function estadoModelo(completitud) {
-  if (completitud === 100) return ESTADO_MODELO[100];
-  if (completitud === 0) return ESTADO_MODELO[0];
-  return {label: 'Parcial', cls: styles.dotAmber};
+/** Mini-ranking arriba del detalle: la salud de cada modelo, enlazada a su bloque (R10). */
+function SaludModelos({modelos, onIr}) {
+  return (
+    <ul className={styles.saludLista}>
+      {modelos.map((m) => {
+        const n = m.salud ? NIVELES[m.salud.nivel] : null;
+        return (
+          <li key={m.nombre}>
+            <a href={`#modelo-${m.nombre}`} className={styles.saludFila} onClick={() => onIr(m.nombre)}>
+              <span className={styles.saludNombre} title={m.nombre}>{m.nombre}</span>
+              <span className={styles.saludBarra}>
+                {n && <span style={{width: `${Math.max(m.salud.score, 1)}%`, background: n.color}} />}
+              </span>
+              {n && (
+                <span className={styles.saludScore} style={{color: n.color}}>
+                  <Icon name={n.icon} className={styles.iconoMini} />
+                  {m.salud.score}
+                </span>
+              )}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
-function ModeloSection({projectSlug, m}) {
-  const est = estadoModelo(m.completitud);
+function Modelo({projectSlug, m, abierto, onToggle}) {
   const tablas = (m.sources && m.sources.table_list) || [];
   const dinfo = (m.sources && m.sources.dataset_info) || {};
   const linajeHref = useBaseUrl('/linaje');
+  const cardHref = useBaseUrl(m.doc_url || '/');
+  const presentes = m.docs_presentes || [];
+  const esperados = m.docs_esperados || [];
+  const meta = [
+    m.algoritmo && ['Algoritmo', `${m.algoritmo}${m.flavour && m.flavour.toLowerCase() !== m.algoritmo.toLowerCase() ? ` · ${m.flavour}` : ''}`],
+    typeof m.auc === 'number' && ['AUC', m.auc.toFixed(3)],
+    m.features != null && ['Features', m.features],
+    ['Tablas fuente', m.n_tablas],
+    ['Versión', m.version ? `v${m.version}` : '—'],
+  ].filter(Boolean);
 
   return (
-    <section className={`${styles.card} ${styles.modeloCard}`} id={`modelo-${m.nombre}`}>
-      <div className={styles.modeloHead}>
-        <h3 className={styles.modeloTitle}>
-          <span className={`${styles.dot} ${est.cls}`} /> {m.nombre}
-        </h3>
-        <span className={styles.modeloVersion}>v{m.version} · {m.completitud}% · {est.label}</span>
-      </div>
+    <details
+      className={styles.modelo}
+      id={`modelo-${m.nombre}`}
+      open={abierto}
+      onToggle={(e) => onToggle(m.nombre, e.currentTarget.open)}
+    >
+      <summary className={styles.modeloSummary}>
+        <span className={styles.modeloNombre}>{m.nombre}</span>
+        <span className={styles.modeloDocs}>{presentes.filter((d) => esperados.includes(d)).length}/{esperados.length} docs</span>
+        <SaludBadge salud={m.salud} />
+        <span className={styles.chevron} aria-hidden="true">▸</span>
+      </summary>
 
-      <SaludDetalle salud={m.salud} drift={m.drift} />
-
-      {(m.resumen_proposito || m.resumen_como_funciona) ? (
-        <>
-          {m.resumen_proposito && <p className={styles.summaryText}>{renderInlineMd(m.resumen_proposito)}</p>}
-          {m.resumen_como_funciona && (
+      <div className={styles.modeloCuerpo}>
+        <div className={styles.modeloCol}>
+          {m.resumen_proposito || m.resumen_como_funciona ? (
             <>
-              <h4 className={styles.summarySubTitle}>Cómo funciona</h4>
-              <p className={styles.summaryText}>{renderInlineMd(m.resumen_como_funciona)}</p>
+              {m.resumen_proposito && <p className={styles.texto}>{renderInlineMd(m.resumen_proposito)}</p>}
+              {m.resumen_como_funciona && (
+                <>
+                  <h4 className={styles.subtitulo}>Cómo funciona</h4>
+                  <p className={styles.texto}>{renderInlineMd(m.resumen_como_funciona)}</p>
+                </>
+              )}
+            </>
+          ) : (
+            <p className={styles.vacio}>
+              Este modelo todavía no tiene narrativa. Genera su Model Card con <code>/generar-model-card</code>.
+            </p>
+          )}
+
+          <dl className={styles.meta}>
+            {meta.map(([k, v]) => (
+              <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
+            ))}
+          </dl>
+
+          <div className={styles.acciones}>
+            {m.doc_url && <a className={styles.btn} href={cardHref}>Abrir Model Card →</a>}
+            <ul className={styles.docList} aria-label="Documentación">
+              {esperados.map((d) => (
+                <DocCheck key={d} projectSlug={projectSlug} modeloNombre={m.nombre} doc={d} presente={presentes.includes(d)} />
+              ))}
+            </ul>
+          </div>
+
+          {tablas.length > 0 && (
+            <>
+              <h4 className={styles.subtitulo}>Tablas fuente</h4>
+              <ul className={styles.tablas}>
+                {tablas.map((t) => (
+                  <li key={t}>
+                    <a href={`${linajeHref}?tabla=${encodeURIComponent(t)}`} title="Ver qué otros modelos usan esta tabla">
+                      <code>{t}</code>
+                    </a>
+                    {dinfo[t] && <span className={styles.columnas}>{dinfo[t].join(', ')}</span>}
+                  </li>
+                ))}
+              </ul>
             </>
           )}
-        </>
-      ) : (
-        <p className={styles.summaryEmpty}>Este modelo todavía no tiene narrativa documentada.</p>
-      )}
+        </div>
 
-      <div className={styles.metrics}>
-        <Metric label="algoritmo" value={m.algoritmo} />
-        <Metric label="flavour" value={m.flavour} />
-        <Metric label="AUC" value={typeof m.auc === 'number' ? m.auc.toFixed(3) : null} />
-        <Metric label="features" value={m.features} />
-        <Metric label="tablas fuente" value={m.n_tablas} />
+        <div className={styles.modeloCol}>
+          <SaludDetalle salud={m.salud} drift={m.drift} />
+        </div>
       </div>
-
-      <h4 className={styles.subTitle}><Icon name="doc" className={styles.cardTitleIcon} /> Documentación</h4>
-      <ul className={styles.docList}>
-        {(m.docs_esperados || []).map((d) => (
-          <DocCheck
-            key={d}
-            projectSlug={projectSlug}
-            modeloNombre={m.nombre}
-            doc={d}
-            presente={(m.docs_presentes || []).includes(d)}
-          />
-        ))}
-      </ul>
-
-      {tablas.length > 0 && (
-        <>
-          <h4 className={styles.subTitle}>Linaje</h4>
-          <ul className={styles.tableList}>
-            {tablas.map((t) => (
-              <li key={t}>
-                <a href={`${linajeHref}?tabla=${encodeURIComponent(t)}`} title="Ver qué otros modelos usan esta tabla">
-                  <code>{t}</code>
-                </a>
-                {dinfo[t] && <span className={styles.tableCols}> — {dinfo[t].join(', ')}</span>}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </section>
+    </details>
   );
 }
 
-function TimelineItem({e}) {
-  const esRelease = e.tipo === 'release';
-  return (
-    <li className={styles.tlItem}>
-      <span className={`${styles.tlDot} ${esRelease ? styles.tlDotRelease : styles.tlDotDoc}`} />
-      <div className={styles.tlBody}>
-        <div className={styles.tlMeta}>
-          <span className={styles.tlTag}>{esRelease ? 'release' : 'doc'}</span>
-          <span className={styles.tlDate}>{fmtFecha(e.fecha)}</span>
-        </div>
-        <a className={styles.tlDetail} href={e.url} target="_blank" rel="noopener">
-          {e.detalle}
-        </a>
-      </div>
-    </li>
-  );
+/** Con 1–2 modelos, todos abiertos; con más, solo el de peor salud (R11). */
+function abiertosIniciales(modelos) {
+  if (modelos.length <= 2) return Object.fromEntries(modelos.map((m) => [m.nombre, true]));
+  const peor = [...modelos].sort((a, b) => (a.salud ? a.salud.score : 101) - (b.salud ? b.salud.score : 101))[0];
+  return {[peor.nombre]: true};
 }
 
 export default function ProjectDetail({project: p}) {
-  const est = ESTADOS[p.estado] || ESTADOS.nuevo;
   const modelos = p.modelos || [];
+  const location = useLocation();
+  const [abiertos, setAbiertos] = useState(() => abiertosIniciales(modelos));
+  const toggle = (nombre, abierto) => setAbiertos((a) => (a[nombre] === abierto ? a : {...a, [nombre]: abierto}));
+
+  // llegar con #modelo-x (desde "Requiere atención" o el mini-ranking) abre ese bloque
+  const ir = (nombre) => setAbiertos((a) => ({...a, [nombre]: true}));
+  useEffect(() => {
+    const m = location.hash.match(/^#modelo-(.+)$/);
+    if (!m) return;
+    const nombre = decodeURIComponent(m[1]);
+    ir(nombre);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`modelo-${nombre}`);
+      if (el) el.scrollIntoView({block: 'start'});
+    });
+  }, [location.hash]);
+
+  const historial = p.historial || [];
 
   return (
     <Layout title={p.nombre} description={`Detalle de ${p.nombre}`}>
       <div className={styles.page}>
-        <div className={styles.breadcrumb}>
-          <a href={useBaseUrl('/')}>Dashboard</a> <span>／</span> <span>{p.nombre}</span>
-        </div>
+       <div className={styles.pageInner}>
+        <nav className={styles.breadcrumb} aria-label="Ruta">
+          <a href={useBaseUrl('/')}>Dashboard</a> <span aria-hidden="true">/</span> <span>{p.nombre}</span>
+        </nav>
 
         <header className={styles.head}>
-          <div className={styles.headTop}>
-            <span className={`${styles.dot} ${est.cls}`} />
-            <span className={styles.estado}>{est.label}</span>
-            {p.area && <span className={styles.area}>{p.area}</span>}
-            {p.salud && <SaludBadge salud={p.salud} />}
+          <div className={styles.headMeta}>
+            <EstadoTag estado={p.estado} />
+            {p.area && <span className={styles.mono}>{p.area}</span>}
           </div>
-          <h1 className={styles.title}>{p.nombre}</h1>
+          <h1 className={styles.titulo}>{p.nombre}</h1>
           <p className={styles.headSub}>
-            {modelos.length} {modelos.length === 1 ? 'modelo' : 'modelos'} · {p.modelos_completos}/{modelos.length} con doc completa
+            {modelos.length} {modelos.length === 1 ? 'modelo' : 'modelos'} · {p.modelos_completos}/{modelos.length} con doc completa ·{' '}
+            <a href={p.repo_url} target="_blank" rel="noopener">Repositorio ↗</a>
           </p>
-          <div className={styles.actions}>
-            <a className={styles.btnGhost} href={p.repo_url} target="_blank" rel="noopener">
-              Repositorio ↗
-            </a>
-          </div>
         </header>
 
-        <section className={styles.summary}>
-          <h2 className={styles.summaryTitle}>¿Qué es este proyecto?</h2>
-          {p.resumen_proyecto ? (
-            renderResumenProyecto(p.resumen_proyecto)
-          ) : (
-            <p className={styles.summaryEmpty}>
-              Este proyecto todavía no tiene un <code>README.md</code>/<code>README_info.md</code> en
-              la raíz describiendo su propósito.
-            </p>
+        <div className={styles.resumenGrid}>
+          <section className={styles.panel}>
+            <h2 className={styles.panelTitulo}>¿Qué es este proyecto?</h2>
+            {p.resumen_proyecto ? (
+              p.resumen_proyecto.split('\n\n').map((parrafo, i) => (
+                <p key={i} className={styles.texto}>{renderInlineMd(parrafo)}</p>
+              ))
+            ) : (
+              <p className={styles.vacio}>
+                El README del repo todavía no tiene una introducción. Escríbela antes del primer
+                subtítulo y aparecerá aquí.
+              </p>
+            )}
+          </section>
+          {modelos.length > 0 && (
+            <section className={styles.panel}>
+              <h2 className={styles.panelTitulo}>Salud de los modelos</h2>
+              <SaludModelos modelos={modelos} onIr={ir} />
+            </section>
           )}
-        </section>
+        </div>
 
         <section>
-          <h2 className={styles.summaryTitle}>Modelos ({modelos.length})</h2>
-          <div className={styles.modelosGrid}>
+          <h2 className={styles.seccionTitulo}>Modelos ({modelos.length})</h2>
+          <div className={styles.modelos}>
             {modelos.map((m) => (
-              <ModeloSection key={m.nombre} projectSlug={p.slug} m={m} />
+              <Modelo key={m.nombre} projectSlug={p.slug} m={m} abierto={!!abiertos[m.nombre]} onToggle={toggle} />
             ))}
           </div>
         </section>
 
-        <section className={styles.card}>
-          <h2 className={styles.cardTitle}><Icon name="clock" className={styles.cardTitleIcon} /> Histórico</h2>
-          <p className={styles.hint}>
-            Derivado de commits a <code>docs/</code> y tags/releases del repo — no es un snapshot
-            guardado, se recalcula en cada build.
-          </p>
-          {p.historial && p.historial.length > 0 ? (
+        <details className={styles.historico}>
+          <summary>
+            <Icon name="clock" className={styles.iconoMini} /> Histórico <span className={styles.mono}>({historial.length})</span>
+            <span className={styles.hint}>Cambios de documentación y releases, del más reciente al más antiguo</span>
+          </summary>
+          {historial.length > 0 ? (
             <ul className={styles.timeline}>
-              {p.historial.map((e, i) => (
-                <TimelineItem key={i} e={e} />
+              {historial.map((e, i) => (
+                <li key={i} className={styles.tlItem}>
+                  <span className={`${styles.tlDot} ${e.tipo === 'release' ? styles.tlDotRelease : ''}`} />
+                  <span className={styles.tlFecha}>{fmtFecha(e.fecha)}</span>
+                  <a href={e.url} target="_blank" rel="noopener" title={e.detalle}>{describirEvento(e)}</a>
+                </li>
               ))}
             </ul>
           ) : (
-            <p className={styles.hint}>Sin eventos registrados todavía.</p>
+            <p className={styles.vacio}>Sin eventos registrados todavía.</p>
           )}
-        </section>
+        </details>
+       </div>
       </div>
     </Layout>
   );

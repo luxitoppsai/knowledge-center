@@ -7,6 +7,7 @@ import Icon from '@site/src/components/Icon';
 import {SaludBadge} from '@site/src/components/Salud';
 import {NIVELES, modelosPorSalud} from '@site/src/lib/salud';
 import {construirGrafo} from '@site/src/lib/linaje';
+import {describirEvento} from '@site/src/lib/eventos';
 import styles from './portafolio.module.css';
 
 const ESTADOS = [
@@ -187,7 +188,9 @@ function Actividad() {
           </span>
           <span className={styles.fecha}>{fmtFecha(e.fecha)}</span>
           <a href={`${base}${e.proyecto.slug}`} className={styles.actProyecto}>{e.proyecto.nombre}</a>
-          <a href={e.url} target="_blank" rel="noopener" className={styles.actDetalle}>{e.detalle}</a>
+          <a href={e.url} target="_blank" rel="noopener" className={styles.actDetalle} title={e.detalle}>
+            {describirEvento(e)}
+          </a>
         </li>
       ))}
     </ul>
@@ -200,6 +203,7 @@ export default function Portafolio() {
   const saludables = modelos.filter((m) => m.salud.nivel === 'saludable').length;
   const pct = modelos.length ? Math.round((100 * saludables) / modelos.length) : 0;
   const conDrift = modelos.filter((m) => m.drift).length;
+  const sinArea = catalog.filter((p) => !p.area);
   const {siteConfig} = useDocusaurusContext();
   const alBuild = fmtFecha(siteConfig.customFields.fechaBuild);
 
@@ -227,6 +231,18 @@ export default function Portafolio() {
             <Kpi valor={grafo.compartidas} label="tablas compartidas entre proyectos" />
           </div>
         </section>
+
+        {sinArea.length > 0 && (
+          <p className={styles.aviso} role="status">
+            <Icon name="alert" className={styles.iconoMini} />
+            <span>
+              <strong>Calidad de datos:</strong> {sinArea.length}{' '}
+              {sinArea.length === 1 ? 'proyecto no declara' : 'proyectos no declaran'} su área
+              ({sinArea.map((p) => p.nombre).join(', ')}). Agrega <code>project.yaml</code> con el
+              campo <code>area</code> para que cuente en la matriz.
+            </span>
+          </p>
+        )}
 
         <div className={styles.grid}>
           <section className={styles.panel}>

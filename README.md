@@ -20,11 +20,11 @@ Nada se llena a mano: todo se deriva de lo que ya está en los repos (sin base d
 
 ## Demo en 90 segundos
 
-1. **(0:00) Dashboard.** "5 proyectos, 9 modelos, y solo el 33% está saludable." La franja
-   *Requiere atención* ordena lo urgente: nadie tuvo que armar esa lista.
-2. **(0:20) Clic en `lgd_GLM_bestModel`.** Salud 60: el modelo se reentrenó el 9 de septiembre y
-   su Model Card es del 16 de julio, **55 días de atraso**. El hub lo detectó comparando commits,
-   no porque alguien lo reportara.
+1. **(0:00) Dashboard.** "5 proyectos, 9 modelos, y solo el 33% está saludable." *Requiere
+   atención* no lista problemas: dice **qué hacer**, en orden. Nadie tuvo que armar esa lista.
+2. **(0:20) Clic en "Regenera el Model Card: 55 días de atraso".** El modelo `lgd_GLM` se
+   reentrenó el 9 de septiembre y su Model Card es del 16 de julio. El hub lo detectó comparando
+   commits, y quien abre ese Model Card ve el aviso arriba, no se entera tarde.
 3. **(0:40) Linaje → `core.hm_clientes`.** "Si esta tabla cambia, se afectan 4 modelos de 4
    proyectos y 2 están en producción." Ese es el análisis de impacto que hoy se hace con reuniones.
 4. **(1:00) Portafolio.** La vista para comité: matriz área × estado, ranking de salud y actividad

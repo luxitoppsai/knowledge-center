@@ -58,8 +58,8 @@ export function SaludDetalle({salud, drift}) {
   return (
     <div className={styles.detalle}>
       <div className={styles.detalleHead}>
-        <span className={styles.detalleTitulo}>Salud</span>
-        <SaludBadge salud={salud} />
+        <span className={styles.detalleTitulo}>Desglose de salud</span>
+        <span className={styles.detalleTotal}>{salud.score}/100</span>
       </div>
 
       {drift && (

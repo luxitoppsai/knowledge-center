@@ -1,0 +1,5 @@
+.tag {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.74rem; font-weight: 500; color: var(--kc-muted); white-space: nowrap;
+}
+.icon { width: 13px; height: 13px; flex: none; }

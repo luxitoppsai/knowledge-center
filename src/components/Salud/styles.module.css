@@ -35,3 +35,4 @@
 .como { margin-top: 0.8rem; font-size: 0.8rem; color: var(--kc-muted); }
 .como summary { cursor: pointer; color: var(--kc-ink); font-weight: 500; }
 .como p { margin: 0.5rem 0 0; }
+.detalleTotal { font-family: var(--ifm-font-family-monospace); font-size: 0.82rem; color: var(--kc-muted); }

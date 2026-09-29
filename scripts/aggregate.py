@@ -223,11 +223,21 @@ def calcular_drift(fecha_card: str | None, fecha_metadata: str | None) -> dict |
     return {"dias": dias, "fecha_card": fecha_card, "fecha_metadata": fecha_metadata}
 
 
-def calcular_salud(completitud: int, tiene_card: bool, drift: dict | None,
+def _faltan(docs: list[str]) -> str:
+    archivos = [f"{d}.md" for d in docs]
+    lista = archivos[0] if len(archivos) == 1 else ", ".join(archivos[:-1]) + f" y {archivos[-1]}"
+    return f"{'Falta' if len(archivos) == 1 else 'Faltan'} {lista}"
+
+
+def calcular_salud(completitud: int, faltantes: list[str], tiene_card: bool, drift: dict | None,
                    auc: float | None, n_tablas: int) -> dict:
-    """Puntaje de salud 0–100 con motivos legibles (R2.3).
+    """Puntaje de salud 0–100 con motivos redactados como acción (RFC-002 R2.3, RFC-003 R2).
+
+    Los motivos van en orden de prioridad operativa (primero el Model Card, que es lo que lee
+    negocio): la UI muestra el primero como "lo siguiente que hay que hacer".
 
     :param completitud: % de docs esperados presentes.
+    :param faltantes: Docs esperados ausentes (``"lineage"``, ...).
     :param tiene_card: Si existe ``model-card.md``.
     :param drift: Salida de :func:`calcular_drift`.
     :param auc: Métrica declarada en ``model_data.json``.
@@ -236,25 +246,26 @@ def calcular_salud(completitud: int, tiene_card: bool, drift: dict | None,
         catálogo para que la UI muestre "x/máx" sin duplicar los pesos).
     """
     motivos = []
-    documentacion = round(PESOS_SALUD["documentacion"] * completitud / 100)
-    if completitud < 100:
-        motivos.append(f"Documentación incompleta ({completitud}%)")
-
     frescura = PESOS_SALUD["frescura"]
     if not tiene_card:
         frescura = 0
-        motivos.append("Sin Model Card")
+        motivos.append("Genera el Model Card con /generar-model-card")
     elif drift:
         frescura = frescura // 2 if drift["dias"] <= DRIFT_TOLERANCIA_DIAS else 0
-        motivos.append(f"Model Card desactualizado hace {drift['dias']} días")
+        motivos.append(f"Regenera el Model Card: {drift['dias']} días de atraso")
+
+    documentacion = round(PESOS_SALUD["documentacion"] * completitud / 100)
+    otros_faltantes = [d for d in faltantes if d != "model-card"]
+    if otros_faltantes:
+        motivos.append(_faltan(otros_faltantes))
 
     desempeno = PESOS_SALUD["desempeno"] if auc is not None else 0
     if auc is None:
-        motivos.append("Sin métrica de desempeño declarada")
+        motivos.append("Declara una métrica de desempeño en model_data.json")
 
     linaje = PESOS_SALUD["linaje"] if n_tablas else 0
     if not n_tablas:
-        motivos.append("Sin linaje de datos declarado")
+        motivos.append("Declara las tablas fuente en model_data.json")
 
     componentes = {"documentacion": documentacion, "frescura": frescura,
                    "desempeno": desempeno, "linaje": linaje}
@@ -314,18 +325,84 @@ def extraer_resumen(model_card_md: str | None) -> dict[str, str | None]:
     return resumen
 
 
+def intro_readme(md: str) -> str | None:
+    """Introducción de un README: los párrafos antes del primer encabezado (RFC-003 R3).
+
+    El README completo es para quien trabaja en el repo (estructura, flujo, comandos); el hub solo
+    muestra "qué es el proyecto", que por convención va arriba. Se descartan el ``# título`` y los
+    bloques de código.
+
+    :param md: Contenido del README.
+    :returns: Párrafos de la introducción separados por línea en blanco, o ``None`` si no hay.
+    """
+    bloques, actual, en_codigo, titulo_visto = [], [], False, False
+    for linea in md.strip().splitlines():
+        if linea.lstrip().startswith("```"):
+            en_codigo = not en_codigo
+            actual = []
+            continue
+        if en_codigo:
+            continue
+        if linea.startswith("#"):
+            if linea.startswith("# ") and not (bloques or actual or titulo_visto):
+                titulo_visto = True
+                continue
+            break
+        if linea.strip():
+            actual.append(linea.strip())
+        elif actual:
+            bloques.append(" ".join(actual))
+            actual = []
+    if actual:
+        bloques.append(" ".join(actual))
+    return "\n\n".join(bloques) or None
+
+
 def resumen_proyecto(full_name: str) -> str | None:
-    """Lee el ``README.md``/``README_info.md`` raíz como descripción del proyecto (no de un
-    modelo). Es texto libre escrito por el equipo dueño del repo, no se reformatea.
+    """Introducción del ``README_info.md``/``README.md`` raíz (en ese orden) como descripción del
+    proyecto (no de un modelo).
 
     :param full_name: ``owner/repo``.
-    :returns: Contenido del README raíz, o ``None`` si no existe ninguno de los dos.
+    :returns: Ver :func:`intro_readme`; ``None`` si no hay README o no tiene introducción.
     """
     for nombre in ("README_info.md", "README.md"):
         contenido = bajar(full_name, nombre)
         if contenido:
-            return contenido.strip()
+            return intro_readme(contenido)
     return None
+
+
+_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "set", "oct", "nov", "dic"]
+
+
+def _fecha_corta(iso: str) -> str:
+    d = _dt(iso)
+    return f"{d.day} {_MESES[d.month - 1]} {d.year}"
+
+
+def aviso_drift(model_card_md: str, drift: dict, url_detalle: str) -> str:
+    """Inserta un aviso de drift bajo el título del Model Card publicado (RFC-003 R4).
+
+    Solo afecta la copia que publica el hub (vista computada): el repo fuente no se toca.
+
+    :param model_card_md: Model Card tal como está en el repo.
+    :param drift: Salida de :func:`calcular_drift` (no ``None``).
+    :param url_detalle: Ruta del sitio al bloque del modelo en su detalle.
+    :returns: El Model Card con el aviso después del primer ``# título`` (o al inicio del cuerpo).
+    """
+    aviso = (
+        f":::warning Model Card desactualizado ({drift['dias']} días)\n"
+        f"El modelo se reentrenó el {_fecha_corta(drift['fecha_metadata'])} "
+        f"(`model_data.json`) y este Model Card es del {_fecha_corta(drift['fecha_card'])}: "
+        f"puede no describir el modelo actual. [Ver la salud del modelo]({url_detalle}).\n"
+        ":::\n\n"
+    )
+    m = re.search(r"^# .*\n+", model_card_md, re.M)
+    if m:
+        return model_card_md[: m.end()] + aviso + model_card_md[m.end():]
+    fm = re.match(r"---\n.*?\n---\n+", model_card_md, re.S)
+    corte = fm.end() if fm else 0
+    return model_card_md[:corte] + aviso + model_card_md[corte:]
 
 
 def _auc(meta: dict) -> float | None:
@@ -378,8 +455,14 @@ def procesar_modelo(full: str, slug: str, modelo_cfg: dict) -> dict:
         "metadata": fecha_ultimo_commit(full, f"{ruta_docs}/model_data.json") if md_raw else None,
     }
     drift = calcular_drift(fechas["card"], fechas["metadata"])
+    if drift:
+        (destino / "model-card.md").write_text(
+            aviso_drift(model_card_md, drift, f"/proyecto/{slug}#modelo-{nombre_modelo}"),
+            encoding="utf-8",
+        )
     auc = _auc(meta)
     tablas = (meta.get("sources") or {}).get("table_list") or []
+    faltantes = [d for d in DOCS_ESPERADOS if d not in presentes]
 
     (destino / "_category_.json").write_text(
         json.dumps({"label": nombre_modelo, "position": 1}, ensure_ascii=False),
@@ -399,7 +482,8 @@ def procesar_modelo(full: str, slug: str, modelo_cfg: dict) -> dict:
         "completitud": completitud,
         "fechas": fechas,
         "drift": drift,
-        "salud": calcular_salud(completitud, model_card_md is not None, drift, auc, len(tablas)),
+        "salud": calcular_salud(completitud, faltantes, model_card_md is not None, drift, auc,
+                                len(tablas)),
         "resumen_proposito": resumen["proposito"],
         "resumen_como_funciona": resumen["como_funciona"],
         "docs_esperados": DOCS_ESPERADOS,

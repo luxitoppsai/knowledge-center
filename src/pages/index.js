@@ -1,210 +1,291 @@
-import React, {useState, useMemo} from 'react';
+import React, {useMemo, useState} from 'react';
 import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import {useHistory, useLocation} from '@docusaurus/router';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useIsBrowser from '@docusaurus/useIsBrowser';
+import {useHistory, useLocation} from '@docusaurus/router';
 import catalog from '@site/src/data/catalog.json';
-import ProgressRing from '@site/src/components/ProgressRing';
+import Icon from '@site/src/components/Icon';
+import EstadoTag from '@site/src/components/EstadoTag';
 import {SaludBadge} from '@site/src/components/Salud';
-import {modelosPorSalud} from '@site/src/lib/salud';
+import {NIVELES, modelosPorSalud} from '@site/src/lib/salud';
+import {ESTADOS, ORDEN_ESTADOS} from '@site/src/lib/estado';
 import styles from './index.module.css';
 
 const ATENCION_VISIBLES = 5;
+const NIVELES_ORDEN = ['critico', 'atencion', 'saludable'];
+const FILTROS = ['q', 'estado', 'salud', 'area', 'orden'];
 
-const ESTADOS = {
-  produccion: {label: 'Producción', dot: styles.dotGreen, pill: styles.pillGreen, ring: 'var(--kc-green)'},
-  desarrollo: {label: 'Desarrollo', dot: styles.dotAmber, pill: styles.pillAmber, ring: 'var(--kc-amber)'},
-  nuevo: {label: 'Nuevo', dot: styles.dotSlate, pill: styles.pillSlate, ring: 'var(--kc-slate)'},
-};
+function fmtFecha(iso) {
+  return new Date(iso).toLocaleDateString('es-PE', {day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC'});
+}
 
-function Stat({valor, label}) {
+/** Filtros en la URL: vistas compartibles. Se aplican tras hidratar (el HTML estático no tiene query). */
+function useFiltros() {
+  const location = useLocation();
+  const history = useHistory();
+  const isBrowser = useIsBrowser();
+  const q = new URLSearchParams(isBrowser ? location.search : '');
+  const valores = Object.fromEntries(FILTROS.map((f) => [f, q.get(f) || '']));
+  const set = (cambios) => {
+    const nq = new URLSearchParams(location.search);
+    Object.entries(cambios).forEach(([k, v]) => (v ? nq.set(k, v) : nq.delete(k)));
+    history.replace({pathname: location.pathname, search: nq.toString() ? `?${nq}` : ''});
+  };
+  const limpiar = () => history.replace({pathname: location.pathname, search: ''});
+  return [valores, set, limpiar];
+}
+
+function coincide(p, texto) {
+  if (!texto) return true;
+  const t = texto.toLowerCase();
+  return [p.nombre, p.slug, ...(p.modelos || []).map((m) => m.nombre)].some((s) =>
+    (s || '').toLowerCase().includes(t),
+  );
+}
+
+function Kpi({valor, label, destacado}) {
   return (
-    <div className={styles.stat}>
-      <div className={styles.statValue}>{valor}</div>
-      <div className={styles.statLabel}>{label}</div>
+    <div className={`${styles.kpi} ${destacado ? styles.kpiDestacado : ''}`}>
+      <span className={styles.kpiValor}>{valor}</span>
+      <span className={styles.kpiLabel}>{label}</span>
     </div>
-  );
-}
-
-function dotClaseCompletitud(completitud) {
-  if (completitud === 100) return styles.dotGreen;
-  if (completitud > 0) return styles.dotAmber;
-  return styles.dotSlate;
-}
-
-function ModeloBadge({m}) {
-  return (
-    <span className={styles.modeloBadge} title={`${m.nombre} · ${m.completitud}% documentado`}>
-      <span className={`${styles.dot} ${dotClaseCompletitud(m.completitud)}`} />
-      {m.nombre}
-    </span>
-  );
-}
-
-function Card({p}) {
-  const est = ESTADOS[p.estado] || ESTADOS.nuevo;
-  const detalleHref = useBaseUrl(`/proyecto/${p.slug}`);
-  return (
-    <article className={styles.card}>
-      <div className={styles.cardHead}>
-        <ProgressRing value={p.completitud_promedio} size={46} color={est.ring} />
-        <div className={styles.cardHeadText}>
-          <div className={styles.cardTop}>
-            <span className={`${styles.pill} ${est.pill}`}>
-              <span className={`${styles.dot} ${est.dot}`} /> {est.label}
-            </span>
-            {p.area && <span className={styles.area}>{p.area}</span>}
-          </div>
-          <h3 className={styles.cardTitle}>
-            <a href={detalleHref} className={styles.cardTitleLink}>{p.nombre}</a>
-          </h3>
-        </div>
-      </div>
-
-      <div className={styles.cardStats}>
-        <div className={styles.cardStat}>
-          <span className={styles.cardStatValue}>{p.n_modelos}</span>
-          <span className={styles.cardStatLabel}>{p.n_modelos === 1 ? 'modelo' : 'modelos'}</span>
-        </div>
-        <div className={styles.cardStat}>
-          <span className={styles.cardStatValue}>{p.modelos_completos}/{p.n_modelos}</span>
-          <span className={styles.cardStatLabel}>con doc completa</span>
-        </div>
-        {p.salud && (
-          <div className={styles.cardStat} title="Salud del proyecto = la de su peor modelo">
-            <SaludBadge salud={p.salud} />
-            <span className={styles.cardStatLabel}>salud</span>
-          </div>
-        )}
-      </div>
-
-      <div className={styles.modelos}>
-        {p.modelos.map((m) => (
-          <ModeloBadge key={m.nombre} m={m} />
-        ))}
-      </div>
-
-      <div className={styles.links}>
-        <a className={styles.btnPrimary} href={detalleHref}>Ver detalle →</a>
-        <a className={styles.btnGhost} href={p.repo_url} target="_blank" rel="noopener">Repo ↗</a>
-      </div>
-    </article>
   );
 }
 
 function AtencionItem({m}) {
   const href = useBaseUrl(`/proyecto/${m.proyecto.slug}`) + `#modelo-${m.nombre}`;
   return (
-    <li className={styles.atencionItem}>
-      <SaludBadge salud={m.salud} conEtiqueta={false} />
-      <a className={styles.atencionModelo} href={href}>{m.nombre}</a>
-      <span className={styles.atencionProyecto}>{m.proyecto.nombre}</span>
-      <span className={styles.atencionMotivo}>{m.salud.motivos[0]}</span>
+    <li>
+      <a className={styles.atencionItem} href={href}>
+        <SaludBadge salud={m.salud} conEtiqueta={false} />
+        <span className={styles.atencionAccion}>{m.salud.motivos[0]}</span>
+        <span className={styles.atencionDonde}>
+          <span className={styles.mono}>{m.nombre}</span>
+          <span className={styles.atencionProyecto}>{m.proyecto.nombre}</span>
+        </span>
+        <span className={styles.flecha} aria-hidden="true">→</span>
+      </a>
     </li>
   );
 }
 
-/** Franja "Requiere atención": modelos no saludables, del peor al mejor (R2.5). */
+/** "Requiere atención": lo siguiente que hay que hacer, del peor modelo al mejor (R9). */
 function Atencion({modelos}) {
   const [todos, setTodos] = useState(false);
   if (modelos.length === 0) return null;
   const visibles = todos ? modelos : modelos.slice(0, ATENCION_VISIBLES);
   return (
     <section className={styles.atencion} aria-labelledby="atencion-titulo">
-      <h2 id="atencion-titulo" className={styles.atencionTitulo}>
-        Requiere atención <span className={styles.atencionCount}>{modelos.length}</span>
-      </h2>
+      <div className={styles.seccionHead}>
+        <h2 id="atencion-titulo" className={styles.seccionTitulo}>
+          Requiere atención <span className={styles.contador}>{modelos.length}</span>
+        </h2>
+        <span className={styles.seccionHint}>Qué hacer primero, del modelo con peor salud al mejor</span>
+      </div>
       <ul className={styles.atencionLista}>
         {visibles.map((m) => <AtencionItem key={`${m.proyecto.slug}/${m.nombre}`} m={m} />)}
       </ul>
       {modelos.length > ATENCION_VISIBLES && (
-        <button className={styles.atencionMas} onClick={() => setTodos(!todos)}>
-          {todos ? 'Ver menos' : `Ver los ${modelos.length - ATENCION_VISIBLES} restantes`}
+        <button className={styles.verMas} onClick={() => setTodos(!todos)}>
+          {todos ? 'Ver menos' : `Ver ${modelos.length - ATENCION_VISIBLES} más`}
         </button>
       )}
     </section>
   );
 }
 
-export default function Home() {
-  // filtros en la URL (?area=&estado=): vistas compartibles y destino de la matriz del portafolio
-  // el HTML estático se genera sin query: se aplica recién tras hidratar para no desincronizar
-  const location = useLocation();
-  const history = useHistory();
-  const isBrowser = useIsBrowser();
-  const q = new URLSearchParams(isBrowser ? location.search : '');
-  const area = q.get('area') || '';
-  const estado = q.get('estado') || '';
-  const setFiltro = (clave, valor) => {
-    const nq = new URLSearchParams(location.search);
-    if (valor) nq.set(clave, valor);
-    else nq.delete(clave);
-    history.replace({pathname: location.pathname, search: nq.toString() ? `?${nq}` : ''});
-  };
-  const setArea = (v) => setFiltro('area', v);
-  const setEstado = (v) => setFiltro('estado', v);
-
-  const areas = useMemo(() => [...new Set(catalog.map((p) => p.area).filter(Boolean))].sort(), []);
-  const filtrados = catalog.filter(
-    (p) => (!area || p.area === area) && (!estado || p.estado === estado),
+function Chip({activo, onClick, children}) {
+  return (
+    <button type="button" className={`${styles.chip} ${activo ? styles.chipActivo : ''}`}
+      aria-pressed={activo} onClick={onClick}>
+      {children}
+    </button>
   );
-  const completos = catalog.filter((p) => p.completitud_promedio === 100).length;
-  const enProd = catalog.filter((p) => p.estado === 'produccion').length;
+}
+
+function Toolbar({f, set, conteos}) {
+  return (
+    <div className={styles.toolbar} role="search">
+      <label className={styles.buscador}>
+        <Icon name="search" className={styles.buscadorIcono} />
+        <input
+          type="search"
+          value={f.q}
+          onChange={(e) => set({q: e.target.value})}
+          placeholder="Buscar proyecto o modelo"
+          aria-label="Buscar proyecto o modelo"
+        />
+      </label>
+
+      <div className={styles.grupoChips} role="group" aria-label="Filtrar por estado">
+        {ORDEN_ESTADOS.map((e) => (
+          <Chip key={e} activo={f.estado === e} onClick={() => set({estado: f.estado === e ? '' : e})}>
+            <Icon name={ESTADOS[e].icon} className={styles.chipIcono} />
+            {ESTADOS[e].label} <span className={styles.chipN}>{conteos.estado[e] || 0}</span>
+          </Chip>
+        ))}
+      </div>
+
+      <div className={styles.grupoChips} role="group" aria-label="Filtrar por salud">
+        {NIVELES_ORDEN.map((n) => (
+          <Chip key={n} activo={f.salud === n} onClick={() => set({salud: f.salud === n ? '' : n})}>
+            <Icon name={NIVELES[n].icon} className={styles.chipIcono} style={{color: NIVELES[n].color}} />
+            {NIVELES[n].label} <span className={styles.chipN}>{conteos.salud[n] || 0}</span>
+          </Chip>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Selects({f, set, areas}) {
+  return (
+    <div className={styles.selects}>
+      <select value={f.area} onChange={(e) => set({area: e.target.value})} aria-label="Área">
+        <option value="">Todas las áreas</option>
+        {areas.map((a) => <option key={a} value={a}>{a}</option>)}
+      </select>
+      <select value={f.orden} onChange={(e) => set({orden: e.target.value})} aria-label="Orden">
+        <option value="">Peor salud primero</option>
+        <option value="nombre">Nombre (A–Z)</option>
+      </select>
+    </div>
+  );
+}
+
+function ModeloChip({m}) {
+  const n = m.salud ? NIVELES[m.salud.nivel] : null;
+  return (
+    <li className={styles.modeloChip} title={m.salud ? `${m.nombre} · salud ${m.salud.score} (${n.label})` : m.nombre}>
+      {n && <span className={styles.punto} style={{background: n.color}} />}
+      {m.nombre}
+    </li>
+  );
+}
+
+/** Card de proyecto (R8): toda clicable, la salud como cifra principal. */
+function Card({p}) {
+  const href = useBaseUrl(`/proyecto/${p.slug}`);
+  const n = p.salud ? NIVELES[p.salud.nivel] : null;
+  const conDrift = (p.modelos || []).filter((m) => m.drift).length;
+  const resumen = [
+    `${p.n_modelos} ${p.n_modelos === 1 ? 'modelo' : 'modelos'}`,
+    `${p.modelos_completos}/${p.n_modelos} con doc completa`,
+    conDrift ? `${conDrift} con drift` : null,
+  ].filter(Boolean);
+
+  return (
+    <article className={styles.card}>
+      <a className={styles.cardLink} href={href} aria-label={`Ver ${p.nombre}`} />
+      <div className={styles.cardMeta}>
+        <EstadoTag estado={p.estado} />
+        {p.area && <span className={styles.mono}>{p.area}</span>}
+      </div>
+      <h3 className={styles.cardTitulo}>{p.nombre}</h3>
+
+      {n ? (
+        <div className={styles.cardSalud} title="Salud del proyecto = la de su peor modelo">
+          <span className={styles.saludScore} style={{color: n.color}}>
+            <Icon name={n.icon} className={styles.saludIcono} />
+            {p.salud.score}
+          </span>
+          <span className={styles.saludTexto}>
+            <strong>{n.label}</strong>
+            <span>salud del peor modelo</span>
+          </span>
+        </div>
+      ) : (
+        <p className={styles.cardVacio}>Sin modelos declarados en config/mlops_config.json</p>
+      )}
+
+      <p className={styles.cardResumen}>{resumen.join(' · ')}</p>
+      <ul className={styles.modelos} aria-label="Modelos">
+        {(p.modelos || []).map((m) => <ModeloChip key={m.nombre} m={m} />)}
+      </ul>
+
+      <div className={styles.cardPie}>
+        <span className={styles.verDetalle}>Ver detalle →</span>
+        <a className={styles.repo} href={p.repo_url} target="_blank" rel="noopener">Repositorio ↗</a>
+      </div>
+    </article>
+  );
+}
+
+export default function Home() {
+  const [f, set, limpiar] = useFiltros();
+  const {siteConfig} = useDocusaurusContext();
+
   const porSalud = useMemo(() => modelosPorSalud(catalog), []);
   const noSaludables = porSalud.filter((m) => m.salud.nivel !== 'saludable');
   const pctSaludables = porSalud.length
     ? Math.round((100 * (porSalud.length - noSaludables.length)) / porSalud.length)
     : 0;
+  const conDrift = porSalud.filter((m) => m.drift).length;
+  const areas = useMemo(() => [...new Set(catalog.map((p) => p.area).filter(Boolean))].sort(), []);
+
+  // conteos de chips sobre lo que dejan los OTROS filtros (así el número anticipa el resultado)
+  const base = catalog.filter((p) => coincide(p, f.q) && (!f.area || p.area === f.area));
+  const conteos = {
+    estado: Object.fromEntries(ORDEN_ESTADOS.map((e) => [e, base.filter((p) => p.estado === e && (!f.salud || (p.salud && p.salud.nivel === f.salud))).length])),
+    salud: Object.fromEntries(NIVELES_ORDEN.map((n) => [n, base.filter((p) => p.salud && p.salud.nivel === n && (!f.estado || p.estado === f.estado)).length])),
+  };
+  const filtrados = base
+    .filter((p) => !f.estado || p.estado === f.estado)
+    .filter((p) => !f.salud || (p.salud && p.salud.nivel === f.salud))
+    .sort((a, b) =>
+      f.orden === 'nombre'
+        ? a.nombre.localeCompare(b.nombre)
+        : (a.salud ? a.salud.score : 101) - (b.salud ? b.salud.score : 101) || a.nombre.localeCompare(b.nombre),
+    );
+  const hayFiltros = FILTROS.some((k) => k !== 'orden' && f[k]);
 
   return (
-    <Layout title="Dashboard" description="Knowledge Center — documentación viva de todos los proyectos">
-      <header className={styles.hero}>
-        <div className={styles.heroInner}>
-          <span className={styles.eyebrow}>COE · MODELOS</span>
-          <h1 className={styles.heroTitle}>Knowledge Center</h1>
-          <p className={styles.heroSub}>
-            Documentación viva de cada proyecto — Model Cards, linaje y funciones, computados en vivo
-            desde los repos.
-          </p>
-          <div className={styles.stats}>
-            <Stat valor={catalog.length} label="proyectos" />
-            <Stat valor={completos} label="con doc completa" />
-            <Stat valor={enProd} label="en producción" />
-            <Stat valor={`${pctSaludables}%`} label="modelos saludables" />
-          </div>
-        </div>
-      </header>
-
+    <Layout title="Dashboard" description="Knowledge Center — salud y documentación de los modelos del COE">
       <main className={styles.main}>
        <div className={styles.mainInner}>
-        <Atencion modelos={noSaludables} />
-        <div className={styles.filters}>
-          <select value={area} onChange={(e) => setArea(e.target.value)}>
-            <option value="">Todas las áreas</option>
-            {areas.map((a) => (
-              <option key={a} value={a}>{a}</option>
-            ))}
-          </select>
-          <select value={estado} onChange={(e) => setEstado(e.target.value)}>
-            <option value="">Todos los estados</option>
-            <option value="produccion">Producción</option>
-            <option value="desarrollo">Desarrollo</option>
-            <option value="nuevo">Nuevo</option>
-          </select>
-          <span className={styles.count}>{filtrados.length} proyecto(s)</span>
-        </div>
-
-        {catalog.length === 0 ? (
-          <p className={styles.empty}>
-            Aún no hay proyectos indexados. Corre la agregación (<code>scripts/aggregate.py</code>).
-          </p>
-        ) : (
-          <div className={styles.grid}>
-            {filtrados.map((p) => (
-              <Card key={p.slug} p={p} />
-            ))}
+        <header className={styles.head}>
+          <div>
+            <h1 className={styles.titulo}>Modelos del COE</h1>
+            <p className={styles.sub}>
+              {catalog.length} proyectos · {porSalud.length} modelos · datos al {fmtFecha(siteConfig.customFields.fechaBuild)}
+            </p>
           </div>
-        )}
+          <div className={styles.kpis}>
+            <Kpi valor={`${pctSaludables}%`} label="modelos saludables" destacado />
+            <Kpi valor={noSaludables.length} label="requieren atención" />
+            <Kpi valor={conDrift} label="con Model Card desactualizado" />
+            <Kpi valor={catalog.filter((p) => p.estado === 'produccion').length} label="proyectos en producción" />
+          </div>
+        </header>
+
+        <Atencion modelos={noSaludables} />
+
+        <section aria-labelledby="proyectos-titulo">
+          <div className={styles.seccionHead}>
+            <h2 id="proyectos-titulo" className={styles.seccionTitulo}>
+              Proyectos <span className={styles.contador}>{filtrados.length}</span>
+            </h2>
+            {hayFiltros && <button className={styles.verMas} onClick={limpiar}>Limpiar filtros</button>}
+            <Selects f={f} set={set} areas={areas} />
+          </div>
+          <Toolbar f={f} set={set} conteos={conteos} />
+
+          {catalog.length === 0 ? (
+            <p className={styles.vacio}>
+              Aún no hay proyectos indexados. Corre la agregación (<code>scripts/aggregate.py</code>).
+            </p>
+          ) : filtrados.length === 0 ? (
+            <p className={styles.vacio}>
+              Ningún proyecto coincide con los filtros.{' '}
+              <button className={styles.verMas} onClick={limpiar}>Limpiar filtros</button>
+            </p>
+          ) : (
+            <div className={styles.grid}>
+              {filtrados.map((p) => <Card key={p.slug} p={p} />)}
+            </div>
+          )}
+        </section>
        </div>
       </main>
     </Layout>
