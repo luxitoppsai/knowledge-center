@@ -21,6 +21,8 @@ import json
 import os
 import re
 import subprocess
+from datetime import datetime
+from functools import cache
 from pathlib import Path
 
 import requests
@@ -36,18 +38,24 @@ PREFIXES = tuple(
 )
 DOCS_ESPERADOS = ["model-card", "lineage", "functions"]
 
+#: Salud del modelo (RFC-002 R2.3). Único lugar donde viven pesos y umbrales; la UI los muestra.
+PESOS_SALUD = {"documentacion": 50, "frescura": 30, "desempeno": 10, "linaje": 10}
+DRIFT_TOLERANCIA_DIAS = 30
+UMBRAL_SALUDABLE = 80
+UMBRAL_ATENCION = 50
 
-def _token() -> str:
-    if os.environ.get("GITHUB_TOKEN"):
-        return os.environ["GITHUB_TOKEN"]
-    return subprocess.run(["gh", "auth", "token"], capture_output=True, text=True).stdout.strip()
 
-
-_H = {"Accept": "application/vnd.github+json", "Authorization": f"Bearer {_token()}"}
+@cache
+def _headers() -> dict[str, str]:
+    """Headers de la API, resueltos en la primera llamada (importar el módulo no pide token)."""
+    token = os.environ.get("GITHUB_TOKEN") or subprocess.run(
+        ["gh", "auth", "token"], capture_output=True, text=True
+    ).stdout.strip()
+    return {"Accept": "application/vnd.github+json", "Authorization": f"Bearer {token}"}
 
 
 def _get(url: str, **kw):
-    return requests.get(url, headers=_H, timeout=30, **kw)
+    return requests.get(url, headers=_headers(), timeout=30, **kw)
 
 
 def listar_repos() -> list[dict]:
@@ -182,6 +190,89 @@ def historial(full_name: str) -> list[dict]:
     return eventos
 
 
+def fecha_ultimo_commit(full_name: str, path: str) -> str | None:
+    """Fecha ISO del último commit que tocó ``path`` (rama ``develop``, si no la por defecto).
+
+    :param full_name: ``owner/repo``.
+    :param path: Ruta del archivo dentro del repo.
+    :returns: Fecha del committer, o ``None`` si ningún commit tocó el archivo.
+    """
+    for params in ({"path": path, "sha": "develop", "per_page": 1}, {"path": path, "per_page": 1}):
+        r = _get(f"{API}/repos/{full_name}/commits", params=params)
+        if r.status_code == 200 and r.json():
+            return r.json()[0]["commit"]["committer"]["date"]
+    return None
+
+
+def _dt(iso: str) -> datetime:
+    return datetime.fromisoformat(iso.replace("Z", "+00:00"))
+
+
+def calcular_drift(fecha_card: str | None, fecha_metadata: str | None) -> dict | None:
+    """Doc drift: la metadata del entrenamiento es más nueva que el Model Card (R2.2).
+
+    :param fecha_card: Último commit a ``model-card.md``.
+    :param fecha_metadata: Último commit a ``model_data.json``.
+    :returns: ``{"dias", "fecha_card", "fecha_metadata"}``, o ``None`` si no hay drift o falta
+        alguna de las dos fechas (sin card no hay "desactualización": hay ausencia, y eso ya lo
+        penaliza la completitud).
+    """
+    if not fecha_card or not fecha_metadata or _dt(fecha_metadata) <= _dt(fecha_card):
+        return None
+    dias = (_dt(fecha_metadata) - _dt(fecha_card)).days
+    return {"dias": dias, "fecha_card": fecha_card, "fecha_metadata": fecha_metadata}
+
+
+def calcular_salud(completitud: int, tiene_card: bool, drift: dict | None,
+                   auc: float | None, n_tablas: int) -> dict:
+    """Puntaje de salud 0–100 con motivos legibles (R2.3).
+
+    :param completitud: % de docs esperados presentes.
+    :param tiene_card: Si existe ``model-card.md``.
+    :param drift: Salida de :func:`calcular_drift`.
+    :param auc: Métrica declarada en ``model_data.json``.
+    :param n_tablas: Tablas en ``sources.table_list``.
+    :returns: ``{"score", "nivel", "componentes", "maximos", "motivos"}`` (``maximos`` viaja al
+        catálogo para que la UI muestre "x/máx" sin duplicar los pesos).
+    """
+    motivos = []
+    documentacion = round(PESOS_SALUD["documentacion"] * completitud / 100)
+    if completitud < 100:
+        motivos.append(f"Documentación incompleta ({completitud}%)")
+
+    frescura = PESOS_SALUD["frescura"]
+    if not tiene_card:
+        frescura = 0
+        motivos.append("Sin Model Card")
+    elif drift:
+        frescura = frescura // 2 if drift["dias"] <= DRIFT_TOLERANCIA_DIAS else 0
+        motivos.append(f"Model Card desactualizado hace {drift['dias']} días")
+
+    desempeno = PESOS_SALUD["desempeno"] if auc is not None else 0
+    if auc is None:
+        motivos.append("Sin métrica de desempeño declarada")
+
+    linaje = PESOS_SALUD["linaje"] if n_tablas else 0
+    if not n_tablas:
+        motivos.append("Sin linaje de datos declarado")
+
+    componentes = {"documentacion": documentacion, "frescura": frescura,
+                   "desempeno": desempeno, "linaje": linaje}
+    score = sum(componentes.values())
+    nivel = ("saludable" if score >= UMBRAL_SALUDABLE
+             else "atencion" if score >= UMBRAL_ATENCION else "critico")
+    return {"score": score, "nivel": nivel, "componentes": componentes,
+            "maximos": dict(PESOS_SALUD), "motivos": motivos}
+
+
+def peor_salud(modelos: list[dict]) -> dict | None:
+    """Salud del proyecto = la del peor modelo (R2.4), para no esconder problemas en un promedio."""
+    if not modelos:
+        return None
+    peor = min(modelos, key=lambda m: m["salud"]["score"])["salud"]
+    return {"score": peor["score"], "nivel": peor["nivel"]}
+
+
 def _parse_yaml_simple(txt: str) -> dict:
     """Parser mínimo de ``clave: "valor"`` (evita dependencia de PyYAML en CI)."""
     out = {}
@@ -282,6 +373,14 @@ def procesar_modelo(full: str, slug: str, modelo_cfg: dict) -> dict:
     completitud = round(100 * len(completos) / len(DOCS_ESPERADOS))
     resumen = extraer_resumen(model_card_md)
 
+    fechas = {
+        "card": fecha_ultimo_commit(full, f"{ruta_docs}/model-card.md") if model_card_md else None,
+        "metadata": fecha_ultimo_commit(full, f"{ruta_docs}/model_data.json") if md_raw else None,
+    }
+    drift = calcular_drift(fechas["card"], fechas["metadata"])
+    auc = _auc(meta)
+    tablas = (meta.get("sources") or {}).get("table_list") or []
+
     (destino / "_category_.json").write_text(
         json.dumps({"label": nombre_modelo, "position": 1}, ensure_ascii=False),
         encoding="utf-8",
@@ -294,16 +393,19 @@ def procesar_modelo(full: str, slug: str, modelo_cfg: dict) -> dict:
         "algoritmo": m0.get("algorithm_name"),
         "flavour": m0.get("flavour"),
         "features": ((m0.get("features") or {}).get("feature_count")),
-        "auc": _auc(meta),
-        "n_tablas": len((meta.get("sources") or {}).get("table_list") or []),
+        "auc": auc,
+        "n_tablas": len(tablas),
         "docs_presentes": presentes,
         "completitud": completitud,
+        "fechas": fechas,
+        "drift": drift,
+        "salud": calcular_salud(completitud, model_card_md is not None, drift, auc, len(tablas)),
         "resumen_proposito": resumen["proposito"],
         "resumen_como_funciona": resumen["como_funciona"],
         "docs_esperados": DOCS_ESPERADOS,
         "sources": {
             "dataset_info": (meta.get("sources") or {}).get("dataset_info") or {},
-            "table_list": (meta.get("sources") or {}).get("table_list") or [],
+            "table_list": tablas,
         },
     }
 
@@ -345,6 +447,7 @@ def procesar(repo: dict) -> dict:
         "n_modelos": len(modelos),
         "modelos_completos": sum(1 for m in modelos if m["completitud"] == 100),
         "completitud_promedio": completitud_promedio,
+        "salud": peor_salud(modelos),
         "estado": estado,
         "actualizado": repo.get("pushed_at"),
         "creado": repo.get("created_at"),
@@ -361,7 +464,9 @@ def main() -> None:
     CATALOG.parent.mkdir(parents=True, exist_ok=True)
     CATALOG.write_text(json.dumps(catalogo, ensure_ascii=False, indent=2), encoding="utf-8")
     for c in catalogo:
-        print(f"  · {c['nombre']}: {c['n_modelos']} modelos · {c['completitud_promedio']}% · {c['estado']}")
+        salud = c["salud"] or {}
+        print(f"  · {c['nombre']}: {c['n_modelos']} modelos · {c['completitud_promedio']}% · "
+              f"{c['estado']} · salud {salud.get('score', '—')} ({salud.get('nivel', '—')})")
     print(f"Catálogo: {CATALOG} ({len(catalogo)} proyectos)")
 
 

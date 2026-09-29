@@ -39,6 +39,33 @@ const paths = {
       <path d="M14 3.5V8h4M9 12.5h6M9 16h6" />
     </>
   ),
+  // Salud: saludable / atención / crítico (siempre junto a su etiqueta, nunca color solo)
+  check: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="m8.2 12.3 2.6 2.6 5-5.4" />
+    </>
+  ),
+  alert: (
+    <>
+      <path d="M12 4 21 19.5H3Z" />
+      <path d="M12 10v4.2M12 17h.01" />
+    </>
+  ),
+  critical: (
+    <>
+      <path d="M8.3 3.5h7.4l4.8 4.8v7.4l-4.8 4.8H8.3l-4.8-4.8V8.3Z" />
+      <path d="M12 8v5M12 16.2h.01" />
+    </>
+  ),
+  // Linaje global: grafo tablas → modelos
+  graph: (
+    <>
+      <circle cx="5.5" cy="6" r="2" /><circle cx="5.5" cy="18" r="2" />
+      <circle cx="18.5" cy="12" r="2" />
+      <path d="M7.5 6.4c5 .6 5 4.8 9 5.4M7.5 17.6c5-.6 5-4.8 9-5.4" />
+    </>
+  ),
   // Histórico: reloj
   clock: (
     <>

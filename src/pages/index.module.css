@@ -120,3 +120,42 @@
 .btnGhost:hover { border-color: var(--kc-cyan); color: var(--kc-cyan); text-decoration: none; }
 
 .empty { color: var(--kc-muted); text-align: center; padding: 3rem 0; }
+
+/* --- Requiere atención --- */
+.atencion {
+  border: 1px solid var(--kc-border); border-left: 3px solid var(--kc-amber);
+  border-radius: var(--kc-radius-lg); background: var(--kc-surface);
+  padding: 1rem 1.2rem; margin-bottom: 1.8rem;
+}
+.atencionTitulo {
+  font-family: var(--ifm-heading-font-family); font-size: 1rem; margin: 0 0 0.6rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.atencionCount {
+  font-family: var(--ifm-font-family-monospace); font-size: 0.75rem; font-weight: 600;
+  background: var(--kc-chip-bg); border: 1px solid var(--kc-border);
+  border-radius: 999px; padding: 0.05rem 0.5rem; color: var(--kc-muted);
+}
+.atencionLista { list-style: none; margin: 0; padding: 0; }
+.atencionItem {
+  display: grid; grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  align-items: center; gap: 0.8rem; padding: 0.45rem 0;
+  border-top: 1px solid var(--kc-border); font-size: 0.86rem;
+}
+.atencionItem:first-child { border-top: none; }
+.atencionModelo {
+  font-family: var(--ifm-font-family-monospace); font-size: 0.8rem; color: var(--kc-ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.atencionModelo:hover { color: var(--kc-cyan); }
+.atencionProyecto, .atencionMotivo {
+  color: var(--kc-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.atencionMas {
+  margin-top: 0.5rem; background: none; border: none; padding: 0;
+  color: var(--kc-cyan); font-size: 0.84rem; cursor: pointer;
+}
+@media (max-width: 700px) {
+  .atencionItem { grid-template-columns: auto minmax(0, 1fr); row-gap: 0.15rem; }
+  .atencionProyecto, .atencionMotivo { grid-column: 2; font-size: 0.8rem; }
+}

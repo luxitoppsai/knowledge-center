@@ -2,6 +2,7 @@ import React from 'react';
 import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import Icon from '@site/src/components/Icon';
+import {SaludBadge, SaludDetalle} from '@site/src/components/Salud';
 import styles from './styles.module.css';
 
 const ESTADOS = {
@@ -102,13 +103,15 @@ function ModeloSection({projectSlug, m}) {
   const dinfo = (m.sources && m.sources.dataset_info) || {};
 
   return (
-    <section className={styles.card}>
+    <section className={`${styles.card} ${styles.modeloCard}`} id={`modelo-${m.nombre}`}>
       <div className={styles.modeloHead}>
         <h3 className={styles.modeloTitle}>
           <span className={`${styles.dot} ${est.cls}`} /> {m.nombre}
         </h3>
         <span className={styles.modeloVersion}>v{m.version} · {m.completitud}% · {est.label}</span>
       </div>
+
+      <SaludDetalle salud={m.salud} drift={m.drift} />
 
       {(m.resumen_proposito || m.resumen_como_funciona) ? (
         <>
@@ -196,6 +199,7 @@ export default function ProjectDetail({project: p}) {
             <span className={`${styles.dot} ${est.cls}`} />
             <span className={styles.estado}>{est.label}</span>
             {p.area && <span className={styles.area}>{p.area}</span>}
+            {p.salud && <SaludBadge salud={p.salud} />}
           </div>
           <h1 className={styles.title}>{p.nombre}</h1>
           <p className={styles.headSub}>

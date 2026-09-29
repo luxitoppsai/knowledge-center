@@ -3,7 +3,11 @@ import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import catalog from '@site/src/data/catalog.json';
 import ProgressRing from '@site/src/components/ProgressRing';
+import {SaludBadge} from '@site/src/components/Salud';
+import {modelosPorSalud} from '@site/src/lib/salud';
 import styles from './index.module.css';
+
+const ATENCION_VISIBLES = 5;
 
 const ESTADOS = {
   produccion: {label: 'Producción', dot: styles.dotGreen, pill: styles.pillGreen, ring: 'var(--kc-green)'},
@@ -64,6 +68,12 @@ function Card({p}) {
           <span className={styles.cardStatValue}>{p.modelos_completos}/{p.n_modelos}</span>
           <span className={styles.cardStatLabel}>con doc completa</span>
         </div>
+        {p.salud && (
+          <div className={styles.cardStat} title="Salud del proyecto = la de su peor modelo">
+            <SaludBadge salud={p.salud} />
+            <span className={styles.cardStatLabel}>salud</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.modelos}>
@@ -80,6 +90,40 @@ function Card({p}) {
   );
 }
 
+function AtencionItem({m}) {
+  const href = useBaseUrl(`/proyecto/${m.proyecto.slug}`) + `#modelo-${m.nombre}`;
+  return (
+    <li className={styles.atencionItem}>
+      <SaludBadge salud={m.salud} conEtiqueta={false} />
+      <a className={styles.atencionModelo} href={href}>{m.nombre}</a>
+      <span className={styles.atencionProyecto}>{m.proyecto.nombre}</span>
+      <span className={styles.atencionMotivo}>{m.salud.motivos[0]}</span>
+    </li>
+  );
+}
+
+/** Franja "Requiere atención": modelos no saludables, del peor al mejor (R2.5). */
+function Atencion({modelos}) {
+  const [todos, setTodos] = useState(false);
+  if (modelos.length === 0) return null;
+  const visibles = todos ? modelos : modelos.slice(0, ATENCION_VISIBLES);
+  return (
+    <section className={styles.atencion} aria-labelledby="atencion-titulo">
+      <h2 id="atencion-titulo" className={styles.atencionTitulo}>
+        Requiere atención <span className={styles.atencionCount}>{modelos.length}</span>
+      </h2>
+      <ul className={styles.atencionLista}>
+        {visibles.map((m) => <AtencionItem key={`${m.proyecto.slug}/${m.nombre}`} m={m} />)}
+      </ul>
+      {modelos.length > ATENCION_VISIBLES && (
+        <button className={styles.atencionMas} onClick={() => setTodos(!todos)}>
+          {todos ? 'Ver menos' : `Ver los ${modelos.length - ATENCION_VISIBLES} restantes`}
+        </button>
+      )}
+    </section>
+  );
+}
+
 export default function Home() {
   const [area, setArea] = useState('');
   const [estado, setEstado] = useState('');
@@ -90,6 +134,11 @@ export default function Home() {
   );
   const completos = catalog.filter((p) => p.completitud_promedio === 100).length;
   const enProd = catalog.filter((p) => p.estado === 'produccion').length;
+  const porSalud = useMemo(() => modelosPorSalud(catalog), []);
+  const noSaludables = porSalud.filter((m) => m.salud.nivel !== 'saludable');
+  const pctSaludables = porSalud.length
+    ? Math.round((100 * (porSalud.length - noSaludables.length)) / porSalud.length)
+    : 0;
 
   return (
     <Layout title="Dashboard" description="Knowledge Center — documentación viva de todos los proyectos">
@@ -105,12 +154,14 @@ export default function Home() {
             <Stat valor={catalog.length} label="proyectos" />
             <Stat valor={completos} label="con doc completa" />
             <Stat valor={enProd} label="en producción" />
+            <Stat valor={`${pctSaludables}%`} label="modelos saludables" />
           </div>
         </div>
       </header>
 
       <main className={styles.main}>
        <div className={styles.mainInner}>
+        <Atencion modelos={noSaludables} />
         <div className={styles.filters}>
           <select value={area} onChange={(e) => setArea(e.target.value)}>
             <option value="">Todas las áreas</option>

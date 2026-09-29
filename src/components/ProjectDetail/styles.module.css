@@ -126,3 +126,7 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .tlDetail:hover { color: var(--kc-cyan); text-decoration: none; }
+
+/* ancla desde "Requiere atención": que la navbar fija no tape el bloque y se note a dónde llegaste */
+.modeloCard { scroll-margin-top: calc(var(--ifm-navbar-height) + 1rem); }
+.modeloCard:target { border-color: var(--kc-cyan); box-shadow: 0 0 0 1px var(--kc-cyan) inset; }

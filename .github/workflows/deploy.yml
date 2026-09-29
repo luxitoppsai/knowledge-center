@@ -1,6 +1,6 @@
 name: Deploy Knowledge Center
 
-# Vista computada: en cada build se re-descubren los repos kc-*, se re-derivan catálogo/docs
+# Vista computada: en cada build se re-descubren los repos coaa_*/coeaa_*, se re-derivan catálogo/docs
 # frescos, se construye Docusaurus y se publica en Pages. Nada se almacena entre builds.
 
 on:
@@ -30,7 +30,10 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - name: Instalar deps de agregación
-        run: pip install requests
+        run: pip install requests pytest
+
+      - name: Tests del agregador (un test roto bloquea el deploy)
+        run: pytest -q
 
       - name: Agregar catálogo (vista computada)
         env:

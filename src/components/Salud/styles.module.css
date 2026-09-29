@@ -1,0 +1,37 @@
+.badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.18rem 0.55rem 0.18rem 0.4rem; border-radius: 999px;
+  font-size: 0.76rem; font-weight: 600; white-space: nowrap;
+}
+.badgeIcon { width: 15px; height: 15px; flex: none; }
+.badgeScore { font-family: var(--ifm-font-family-monospace); font-weight: 700; }
+/* la etiqueta va en tinta de texto: el color de estado lo llevan el ícono y el puntaje */
+.badgeLabel { color: var(--kc-ink); font-weight: 500; }
+
+.detalle {
+  border: 1px solid var(--kc-border); border-radius: var(--kc-radius-md);
+  padding: 0.9rem 1rem; margin: 1rem 0 1.2rem; background: var(--kc-chip-bg);
+}
+.detalleHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.8rem; }
+.detalleTitulo { font-family: var(--ifm-heading-font-family); font-weight: 700; font-size: 0.95rem; }
+
+.drift {
+  display: flex; gap: 0.5rem; align-items: flex-start;
+  border-left: 3px solid var(--kc-amber); background: var(--kc-amber-bg);
+  border-radius: var(--kc-radius-sm); padding: 0.55rem 0.7rem; margin-bottom: 0.9rem;
+  font-size: 0.84rem; color: var(--kc-ink);
+}
+.drift svg { color: var(--kc-amber); margin-top: 0.1rem; }
+
+.meters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.7rem 1.2rem; }
+.meterHead { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--kc-muted); margin-bottom: 0.3rem; }
+.meterValue { font-family: var(--ifm-font-family-monospace); color: var(--kc-ink); font-variant-numeric: tabular-nums; }
+.track { height: 6px; border-radius: 4px; overflow: hidden; }
+.fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+
+.motivos { margin: 0.9rem 0 0; padding-left: 1.1rem; font-size: 0.84rem; color: var(--kc-muted); }
+.motivos li { margin: 0.15rem 0; }
+
+.como { margin-top: 0.8rem; font-size: 0.8rem; color: var(--kc-muted); }
+.como summary { cursor: pointer; color: var(--kc-ink); font-weight: 500; }
+.como p { margin: 0.5rem 0 0; }
