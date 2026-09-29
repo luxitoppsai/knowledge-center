@@ -49,12 +49,12 @@ esquema y vista de tabla de proyectos (hasta que haya más datos).
 
 ## 3. Criterios de aceptación
 
-- [ ] El Model Card de `lgd_GLM_bestModel` muestra la ficha con proyecto, salud 60, GLM, fecha
+- [x] El Model Card de `lgd_GLM_bestModel` muestra la ficha con proyecto, salud 60, GLM, fecha
       y el aviso de drift de 55 días; el markdown publicado ya no contiene un admonition de drift.
-- [ ] El linaje y las funciones de un modelo también muestran la ficha (sin el aviso).
-- [ ] El footer es claro y muestra la fecha de datos; la navbar no tiene link a GitHub.
-- [ ] Ninguna card contiene "salud del peor modelo" ni "drift".
-- [ ] La fila de `ct_LogisticRegression_bestModel` en "Requiere atención" muestra "+3".
-- [ ] El detalle de Churn Tarjetas (1 modelo) no muestra el mini-ranking.
-- [ ] Con puntero táctil, los chips miden ≥ 44 px.
-- [ ] Tests en verde; Playwright en producción en ambos temas y móvil, sin errores de consola.
+- [x] El linaje y las funciones de un modelo también muestran la ficha (sin el aviso).
+- [x] El footer es claro y muestra la fecha de datos; la navbar no tiene link a GitHub.
+- [x] Ninguna card contiene "salud del peor modelo" ni "drift".
+- [x] La fila de `ct_LogisticRegression_bestModel` en "Requiere atención" muestra "+3".
+- [x] El detalle de Churn Tarjetas (1 modelo) no muestra el mini-ranking.
+- [x] Con puntero táctil, los chips miden ≥ 44 px.
+- [x] Tests en verde; Playwright en producción en ambos temas y móvil, sin errores de consola.
