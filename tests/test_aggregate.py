@@ -155,3 +155,43 @@ def test_proyecto_toma_el_peor_modelo():
 
 def test_proyecto_sin_modelos():
     assert ag.peor_salud([]) is None
+
+
+def test_model_card_prioriza_proposito_sin_perder_secciones():
+    intro = "---\nid: model-card\n---\n\n# nombre\n\n"
+    secciones = {
+        "Identidad": "| Modelo | nombre |\n\n",
+        "Propósito y uso previsto": "Predice la fuga.\n\n",
+        "Hiperparámetros": "| alpha | 1 |\n\n",
+        "Métricas": "AUC: 0.8\n\n",
+        "Limitaciones y consideraciones": "Datos de ejemplo.\n\n",
+        "Cómo funciona": "Lee tablas.\n\n",
+    }
+    md = intro + "".join(f"## {titulo}\n\n{cuerpo}" for titulo, cuerpo in secciones.items())
+    resultado = ag.ordenar_model_card(md)
+    assert resultado.startswith(intro)
+    titulos = ["Propósito y uso previsto", "Cómo funciona", "Métricas",
+               "Limitaciones y consideraciones", "Hiperparámetros", "Identidad"]
+    posiciones = [resultado.index(f"## {titulo}\n") for titulo in titulos]
+    assert posiciones == sorted(posiciones)
+    for titulo, cuerpo in secciones.items():
+        assert resultado.count(f"## {titulo}\n\n{cuerpo}") == 1
+    assert ag.ordenar_model_card(resultado) == resultado
+    assert ag.extraer_resumen(resultado) == ag.extraer_resumen(md)
+
+
+@pytest.mark.parametrize("cerca", ["```", "~~~~"])
+def test_model_card_no_confunde_encabezados_en_codigo(cerca):
+    identidad = f"## Identidad\n\n{cerca}\n## Métricas\nEjemplo dentro del código.\n{cerca}\n\n"
+    proposito = "## Propósito y uso previsto\n\nContenido real.\n\n"
+    assert ag.ordenar_model_card(identidad + proposito) == proposito + identidad
+
+
+def test_model_card_sin_secciones_se_conserva():
+    md = "---\ntitle: Modelo\n---\n\n# Modelo\n\nDescripción sin secciones.\n"
+    assert ag.ordenar_model_card(md) == md
+
+
+def test_model_card_separa_seccion_movida_sin_salto_final():
+    md = "## Identidad\n\nDatos.\n\n## Propósito y uso previsto\n\nPredice la fuga."
+    assert ag.ordenar_model_card(md) == "## Propósito y uso previsto\n\nPredice la fuga.\n\n## Identidad\n\nDatos.\n\n"

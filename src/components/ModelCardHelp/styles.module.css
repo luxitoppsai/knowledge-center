@@ -1,0 +1,5 @@
+.help { font-size: 0.875rem; color: var(--kc-ink); margin-top: 0.7rem; }
+.help summary { color: var(--kc-cyan); cursor: pointer; font-weight: 600; }
+.help p { margin: 0.6rem 0; line-height: 1.6; }
+.command { display: flex; gap: 0.7rem; flex-wrap: wrap; align-items: center; }
+@media (pointer: coarse) { .help summary { min-height: 44px; display: flex; align-items: center; } }

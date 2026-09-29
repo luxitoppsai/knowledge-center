@@ -4,7 +4,9 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import catalog from '@site/src/data/catalog.json';
 import Icon from '@site/src/components/Icon';
-import {SaludBadge} from '@site/src/components/Salud';
+import {SaludBadge, SaludExplicacion} from '@site/src/components/Salud';
+import Identifier from '@site/src/components/Identifier';
+import {describirMotivo} from '@site/src/lib/motivos';
 import {NIVELES, modelosPorSalud} from '@site/src/lib/salud';
 import {construirGrafo} from '@site/src/lib/linaje';
 import {describirEvento} from '@site/src/lib/eventos';
@@ -16,7 +18,7 @@ const ESTADOS = [
   {clave: 'nuevo', label: 'Nuevo'},
 ];
 const UMBRALES = [50, 80];
-const EVENTOS_RECIENTES = 12;
+const EVENTOS_RECIENTES = 5;
 
 function fmtFecha(iso) {
   // UTC fijo: el HTML del build y el render del navegador deben producir el mismo texto
@@ -46,6 +48,7 @@ function Matriz() {
   const max = Math.max(1, ...areas.flatMap((a) => ESTADOS.map((e) => conteo(a, e.clave))));
 
   return (
+    <>
     <div className={styles.scrollX}>
       <table className={styles.matriz}>
         <caption className={styles.srOnly}>Proyectos por área y estado</caption>
@@ -85,10 +88,23 @@ function Matriz() {
         </tbody>
       </table>
     </div>
+    <div className={styles.leyenda} aria-label="Leyenda: cantidad de proyectos por celda">
+      <span className={styles.leyendaItem}><span className={`${styles.muestra} ${styles.celdaVacia}`} />0 proyectos</span>
+      {[1, 2, 3, 4].map((nivel) => {
+        const desde = Math.floor((nivel - 1) * max / 4) + 1;
+        const hasta = Math.floor(nivel * max / 4);
+        if (desde > hasta) return null;
+        return <span className={styles.leyendaItem} key={nivel}>
+          <span className={styles.muestra} style={{background: `var(--kc-seq-${nivel})`}} />
+          {desde === hasta ? desde : `${desde}–${hasta}`} {hasta === 1 ? 'proyecto' : 'proyectos'}
+        </span>;
+      })}
+    </div>
+    </>
   );
 }
 
-function FilaRanking({m, activo, onHover}) {
+function FilaRanking({m, activo, onHover, onSeleccion}) {
   const n = NIVELES[m.salud.nivel];
   const href = useBaseUrl(`/proyecto/${m.proyecto.slug}`) + `#modelo-${m.nombre}`;
   return (
@@ -101,13 +117,14 @@ function FilaRanking({m, activo, onHover}) {
         <span className={styles.mono}>{m.nombre}</span>
         <span className={styles.filaProyecto}>{m.proyecto.nombre}</span>
       </a>
-      <div className={styles.barraZona}>
+      <button type="button" className={styles.barraZona} onClick={() => onSeleccion(m)}
+        aria-label={`Ver motivos de ${m.nombre}, salud documental ${m.salud.score}/100`}>
         {UMBRALES.map((u) => <span key={u} className={styles.umbral} style={{left: `${u}%`}} />)}
         <span className={styles.barra} style={{width: `${Math.max(m.salud.score, 0.6)}%`, background: n.color}} />
-      </div>
+      </button>
       <span className={styles.filaScore} style={{color: n.color}}>
         <Icon name={n.icon} className={styles.iconoMini} />
-        {m.salud.score}
+        {m.salud.score}/100
       </span>
     </li>
   );
@@ -115,6 +132,8 @@ function FilaRanking({m, activo, onHover}) {
 
 function Ranking({modelos}) {
   const [hover, setHover] = useState(null);
+  const [seleccionado, setSeleccionado] = useState(null);
+  const detalle = hover || seleccionado;
   return (
     <>
       <div className={styles.eje} aria-hidden="true">
@@ -126,74 +145,87 @@ function Ranking({modelos}) {
         </div>
         <span />
       </div>
-      <ul className={styles.ranking} aria-label="Ranking de salud por modelo, del peor al mejor">
+      <ul className={styles.ranking} aria-label="Ranking de salud documental por modelo, del menor al mayor puntaje">
         {modelos.map((m) => (
           <FilaRanking
             key={`${m.proyecto.slug}/${m.nombre}`}
             m={m}
-            activo={hover === m}
+            activo={detalle === m}
             onHover={setHover}
+            onSeleccion={(modelo) => setSeleccionado(seleccionado === modelo ? null : modelo)}
           />
         ))}
       </ul>
       <div className={styles.tooltip} aria-live="polite">
-        {hover ? (
+        {detalle ? (
           <>
-            <SaludBadge salud={hover.salud} /> <strong className={styles.mono}>{hover.nombre}</strong>
+            <SaludBadge salud={detalle.salud} /> <Identifier value={detalle.nombre} copy />
             {' — '}
-            {hover.salud.motivos.length ? hover.salud.motivos.join(' · ') : 'Sin observaciones'}
+            {detalle.salud.motivos.length ? detalle.salud.motivos.map(describirMotivo).join(' · ') : 'Sin observaciones documentales'}
           </>
         ) : (
-          <span className={styles.hint}>Pasa el cursor por un modelo para ver por qué tiene ese puntaje.</span>
+          <span className={styles.hint}>Selecciona una barra para ver los motivos del puntaje. También puedes usar el teclado.</span>
         )}
       </div>
       <details className={styles.tabla}>
         <summary>Ver como tabla</summary>
-        <div className={styles.scrollX}>
-          <table>
-            <thead>
-              <tr><th>Modelo</th><th>Proyecto</th><th>Salud</th><th>Nivel</th><th>Motivos</th></tr>
-            </thead>
-            <tbody>
-              {modelos.map((m) => (
-                <tr key={`${m.proyecto.slug}/${m.nombre}`}>
-                  <td className={styles.mono}>{m.nombre}</td>
-                  <td>{m.proyecto.nombre}</td>
-                  <td>{m.salud.score}</td>
-                  <td>{NIVELES[m.salud.nivel].label}</td>
-                  <td>{m.salud.motivos.join(' · ') || '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TablaSalud modelos={modelos} />
       </details>
+      <div className={styles.tablaImpresion}><TablaSalud modelos={modelos} /></div>
     </>
   );
 }
 
+function TablaSalud({modelos}) {
+  return (
+    <div className={styles.scrollX}>
+      <table>
+        <caption>Salud documental por modelo</caption>
+        <thead><tr><th scope="col">Modelo</th><th scope="col">Proyecto</th>
+          <th scope="col">Salud documental</th><th scope="col">Nivel</th><th scope="col">Motivos</th></tr></thead>
+        <tbody>{modelos.map((m) => (
+          <tr key={`${m.proyecto.slug}/${m.nombre}`}>
+            <th scope="row" className={styles.mono}>{m.nombre}</th><td>{m.proyecto.nombre}</td>
+            <td>{m.salud.score}/100</td><td>{NIVELES[m.salud.nivel].label}</td>
+            <td>{m.salud.motivos.map(describirMotivo).join(' · ') || 'Sin observaciones documentales'}</td>
+          </tr>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+}
+
 function Actividad() {
+  const [todos, setTodos] = useState(false);
   const base = useBaseUrl('/proyecto/');
   const eventos = catalog
     .flatMap((p) => (p.historial || []).map((e) => ({...e, proyecto: p})))
-    .sort((a, b) => b.fecha.localeCompare(a.fecha))
-    .slice(0, EVENTOS_RECIENTES);
+    .sort((a, b) => b.fecha.localeCompare(a.fecha));
+  const visibles = todos ? eventos : eventos.slice(0, EVENTOS_RECIENTES);
   if (eventos.length === 0) return <p className={styles.hint}>Sin actividad registrada.</p>;
   return (
+    <>
     <ul className={styles.actividad}>
-      {eventos.map((e, i) => (
+      {visibles.map((e, i) => (
         <li key={i}>
           <span className={`${styles.tag} ${e.tipo === 'release' ? styles.tagRelease : ''}`}>
-            {e.tipo === 'release' ? 'release' : 'doc'}
+            {e.tipo === 'release' ? 'Versión' : 'Documento'}
           </span>
           <span className={styles.fecha}>{fmtFecha(e.fecha)}</span>
           <a href={`${base}${e.proyecto.slug}`} className={styles.actProyecto}>{e.proyecto.nombre}</a>
-          <a href={e.url} target="_blank" rel="noopener" className={styles.actDetalle} title={e.detalle}>
-            {describirEvento(e)}
-          </a>
+          <details className={styles.actEvento}>
+            <summary><span className={styles.actDetalle}>{describirEvento(e)}</span></summary>
+            <p>{describirEvento(e)}</p>
+            <a href={e.url} target="_blank" rel="noopener">Ver cambio en el repositorio ↗</a>
+          </details>
         </li>
       ))}
     </ul>
+    {eventos.length > EVENTOS_RECIENTES && <button type="button" className={styles.boton}
+      aria-expanded={todos} onClick={() => setTodos(!todos)}>
+      {todos ? 'Ver menos actividad' : `Ver ${eventos.length - EVENTOS_RECIENTES} eventos más`}
+    </button>}
+    </>
   );
 }
 
@@ -209,45 +241,56 @@ export default function Portafolio() {
 
   return (
     <Layout title="Portafolio" description="Estado del portafolio de modelos del COE">
-      <div className={styles.page}>
+      <main className={styles.page}>
        <div className={styles.pageInner}>
         <header className={styles.head}>
           <p className={styles.eyebrow}>Portafolio de modelos · datos al {alBuild}</p>
-          <h1 className={styles.titulo}>Estado del portafolio</h1>
+          <div className={styles.headFila}>
+            <h1 className={styles.titulo}>Estado del portafolio</h1>
+            <button type="button" className={styles.boton} onClick={() => window.print()}>Imprimir / Guardar PDF</button>
+          </div>
         </header>
 
         <section className={styles.resumen} aria-label="Indicadores">
           <div className={styles.hero}>
-            <div className={styles.heroValor}>{pct}%</div>
+            <div className={styles.heroValor}>{modelos.length ? `${pct}%` : '—'}</div>
             <div className={styles.heroLabel}>
-              de los modelos están saludables ({saludables} de {modelos.length})
+              modelos con documentación saludable ({saludables} de {modelos.length})
             </div>
           </div>
           <div className={styles.kpis}>
             <Kpi valor={catalog.length} label="proyectos" />
             <Kpi valor={modelos.length} label="modelos" />
-            <Kpi valor={conDrift} label="con Model Card desactualizado" />
+            <Kpi valor={conDrift} label="modelos con metadatos más recientes" />
             <Kpi valor={grafo.tablas.length} label="tablas fuente" />
             <Kpi valor={grafo.compartidas} label="tablas compartidas entre proyectos" />
           </div>
         </section>
 
+        <SaludExplicacion />
         {sinArea.length > 0 && (
           <p className={styles.aviso} role="status">
             <Icon name="alert" className={styles.iconoMini} />
             <span>
               <strong>Calidad de datos:</strong> {sinArea.length}{' '}
               {sinArea.length === 1 ? 'proyecto no declara' : 'proyectos no declaran'} su área
-              ({sinArea.map((p) => p.nombre).join(', ')}). Agrega <code>project.yaml</code> con el
-              campo <code>area</code> para que cuente en la matriz.
+              ({sinArea.map((p) => p.nombre).join(', ')}). Se muestran en la fila «sin área»;
+              completa el área en el repositorio del proyecto para clasificarlos.
             </span>
           </p>
         )}
 
         <div className={styles.grid}>
+          <section id="salud-modelos" className={`${styles.panel} ${styles.ancho}`}>
+            <h2 className={styles.panelTitulo}>Salud documental por modelo</h2>
+            <p className={styles.hint}>
+              Del menor al mayor puntaje. Líneas en 50 y 80: umbrales de crítico, atención y saludable.
+            </p>
+            <Ranking modelos={modelos} />
+          </section>
           <section className={styles.panel}>
             <h2 className={styles.panelTitulo}>Proyectos por área y estado</h2>
-            <p className={styles.hint}>Más oscuro = más proyectos. Cada celda abre el dashboard filtrado.</p>
+            <p className={styles.hint}>La leyenda indica la cantidad de proyectos. Selecciona una celda para verlos.</p>
             <Matriz />
           </section>
 
@@ -257,16 +300,10 @@ export default function Portafolio() {
             <Actividad />
           </section>
 
-          <section className={`${styles.panel} ${styles.ancho}`}>
-            <h2 className={styles.panelTitulo}>Salud por modelo</h2>
-            <p className={styles.hint}>
-              Del peor al mejor. Líneas en 50 y 80: umbrales de crítico, atención y saludable.
-            </p>
-            <Ranking modelos={modelos} />
-          </section>
+
         </div>
        </div>
-      </div>
+      </main>
     </Layout>
   );
 }

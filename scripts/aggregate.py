@@ -381,6 +381,47 @@ def _auc(meta: dict) -> float | None:
     return None
 
 
+def ordenar_model_card(md: str) -> str:
+    """Presenta propósito, funcionamiento, métricas y limitaciones antes de identidad técnica.
+
+    Conserva el contenido de cada sección y los encabezados para que Docusaurus genere un TOC
+    coherente. Solo reconoce encabezados de nivel 2 fuera de bloques de código; no modifica
+    el repositorio de origen ni usa la transformación como señal de actualización (RFC-005).
+
+    :param md: Markdown descargado del Model Card.
+    :returns: Markdown con secciones reordenadas, sin cambiar su contenido.
+    """
+    introduccion: list[str] = []
+    secciones: list[tuple[str, list[str]]] = []
+    actual = introduccion
+    cerca: tuple[str, int] | None = None
+    for linea in md.splitlines(keepends=True):
+        delimitador = re.match(r"^ {0,3}(`{3,}|~{3,})", linea)
+        if delimitador:
+            marca = delimitador.group(1)
+            if cerca is None:
+                cerca = (marca[0], len(marca))
+            elif marca[0] == cerca[0] and len(marca) >= cerca[1] and not linea[delimitador.end():].strip():
+                cerca = None
+            actual.append(linea)
+            continue
+        encabezado = re.match(r"^##\s+(.+?)\s*#*\s*$", linea) if cerca is None else None
+        if encabezado:
+            actual = []
+            secciones.append((encabezado.group(1), actual))
+        actual.append(linea)
+
+    prioridad = {"Propósito y uso previsto": 0, "Cómo funciona": 1, "Métricas": 2,
+                 "Limitaciones y consideraciones": 3, "Identidad": 5}
+    secciones.sort(key=lambda s: prioridad.get(s[0], 4))
+    bloques = ["".join(contenido) for _, contenido in secciones]
+    # Una sección al final del archivo puede no tener salto final; al moverla necesita separación.
+    return "".join(introduccion) + "".join(
+        bloque + ("\n\n" if i < len(bloques) - 1 and not bloque.endswith("\n") else "")
+        for i, bloque in enumerate(bloques)
+    )
+
+
 def procesar_modelo(full: str, slug: str, modelo_cfg: dict) -> dict:
     """Deriva el catálogo de UN modelo dentro de un proyecto.
 
@@ -404,7 +445,8 @@ def procesar_modelo(full: str, slug: str, modelo_cfg: dict) -> dict:
             continue
         contenido = bajar(full, f"{ruta_docs}/{nombre}")
         if contenido:
-            (destino / nombre).write_text(contenido, encoding="utf-8")
+            documento = ordenar_model_card(contenido) if nombre == "model-card.md" else contenido
+            (destino / nombre).write_text(documento, encoding="utf-8")
             presentes.append(Path(nombre).stem)
             if nombre == "model-card.md":
                 model_card_md = contenido

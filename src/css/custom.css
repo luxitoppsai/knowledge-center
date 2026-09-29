@@ -4,7 +4,7 @@
    como override. */
 
 :root {
-  --ifm-color-primary: #0891b2;
+  --ifm-color-primary: #077a97;
   --ifm-color-primary-dark: #077a97;
   --ifm-color-primary-darker: #066e88;
   --ifm-color-primary-darkest: #055a70;
@@ -33,7 +33,7 @@
   --ifm-toc-border-color: rgba(15, 23, 42, 0.10);
   --ifm-table-border-color: rgba(15, 23, 42, 0.12);
 
-  --kc-cyan: #0891b2;
+  --kc-cyan: #077a97;
   --kc-violet: #7c3aed;
   --kc-grad: linear-gradient(120deg, #0891b2 0%, #4f46e5 55%, #9333ea 100%);
   --kc-ink: #131a2c;
@@ -86,7 +86,7 @@ html[data-theme='dark'] {
   --kc-violet: #8b5cf6;
   --kc-grad: linear-gradient(120deg, #22d3ee 0%, #6366f1 55%, #a855f7 100%);
   --kc-ink: #e8ecf5;
-  --kc-muted: #8a94a8;
+  --kc-muted: #a6afc0;
   --kc-surface: rgba(255, 255, 255, 0.04);
   --kc-border: rgba(255, 255, 255, 0.09);
   --kc-shadow: none;
@@ -161,6 +161,7 @@ body {
 
 /* Impresión/PDF: el papel es blanco, así que siempre la paleta clara, aunque el tema sea oscuro */
 @media print {
+  html[data-theme] { color-scheme: light !important; }
   html[data-theme] {
     --ifm-background-color: #ffffff;
     --ifm-background-surface-color: #ffffff;
@@ -172,7 +173,7 @@ body {
     --kc-border: rgba(15, 23, 42, 0.18);
     --kc-track: rgba(15, 23, 42, 0.18);
     --kc-chip-bg: rgba(15, 23, 42, 0.04);
-    --kc-cyan: #0891b2;
+    --kc-cyan: #077a97;
     --kc-green: #059669; --kc-green-bg: rgba(5, 150, 105, 0.10);
     --kc-amber: #b45309; --kc-amber-bg: rgba(180, 83, 9, 0.10);
     --kc-red: #c42b2b; --kc-red-bg: rgba(196, 43, 43, 0.10);
@@ -188,7 +189,7 @@ body {
 .markdown h1 { font-size: clamp(1.6rem, 3vw, 2.1rem); }
 .markdown h2 { font-size: 1.3rem; margin-top: 2rem; }
 .markdown h3 { font-size: 1.05rem; }
-.markdown th { font-size: 0.8rem; font-weight: 600; text-align: left; color: var(--kc-muted); }
+.markdown th { font-size: 0.875rem; font-weight: 600; text-align: left; color: var(--kc-muted); }
 .markdown td { font-size: 0.9rem; }
 @media (min-width: 997px) {
   .markdown table { display: table; width: 100%; }
@@ -199,4 +200,13 @@ body {
   --ifm-footer-padding-vertical: 1.1rem;
   background: transparent; border-top: 1px solid var(--kc-border);
 }
-.footer__copyright { font-size: 0.8rem; color: var(--kc-muted); }
+.footer__copyright { font-size: 0.875rem; color: var(--kc-muted); }
+
+/* RFC-005: foco visible uniforme y texto técnico legible en cualquier ancho. */
+:where(a, button, summary, select, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--kc-cyan); outline-offset: 3px;
+}
+.markdown { overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+}

@@ -4,6 +4,8 @@ import catalog from '@site/src/data/catalog.json';
 import Icon from '@site/src/components/Icon';
 import EstadoTag from '@site/src/components/EstadoTag';
 import {SaludBadge} from '@site/src/components/Salud';
+import Identifier from '@site/src/components/Identifier';
+import ModelCardHelp from '@site/src/components/ModelCardHelp';
 import styles from './styles.module.css';
 
 const TIPOS = {'model-card': 'Model Card', lineage: 'Linaje', functions: 'Funciones'};
@@ -43,10 +45,13 @@ export default function FichaModelo({docId}) {
         <EstadoTag estado={p.estado} />
         <span className={styles.tipo}>{TIPOS[doc] || doc}</span>
       </div>
+      <div className={styles.identificador}>
+        <Identifier value={m.nombre} copy />
+      </div>
       <div className={styles.datos}>
         {m.salud && (
           <div>
-            <span className={styles.label}>Salud</span>
+            <span className={styles.label}>Salud documental</span>
             <a href={detalle} className={styles.salud}><SaludBadge salud={m.salud} /></a>
           </div>
         )}
@@ -61,13 +66,14 @@ export default function FichaModelo({docId}) {
         <p className={styles.drift} role="status">
           <Icon name="clock" className={styles.icono} />
           <span>
-            <strong>Este Model Card está desactualizado ({m.drift.dias} días).</strong> El modelo se
-            reentrenó el {fmtFecha(m.drift.fecha_metadata)} y este documento es del{' '}
-            {fmtFecha(m.drift.fecha_card)}: sus cifras pueden no describir el modelo actual.{' '}
-            <a href={detalle}>Ver la salud del modelo</a>.
+            <strong>Documentación posiblemente desactualizada.</strong>{' '}
+            Model Card: {fmtFecha(m.drift.fecha_card)} · Metadatos: {fmtFecha(m.drift.fecha_metadata)}
+            {' '}({m.drift.dias} días de diferencia).{' '}
+            <a href={detalle}>Revisar el modelo</a>.
           </span>
         </p>
       )}
+      {doc === 'model-card' && m.drift && <ModelCardHelp repoUrl={p.repo_url} />}
     </aside>
   );
 }

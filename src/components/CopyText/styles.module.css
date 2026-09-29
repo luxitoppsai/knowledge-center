@@ -1,0 +1,8 @@
+.control { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.button {
+  background: var(--kc-surface); color: var(--kc-cyan); border: 1px solid var(--kc-border);
+  border-radius: var(--kc-radius-sm); padding: 0.3rem 0.6rem; cursor: pointer; font-size: 0.875rem;
+}
+.button:hover { border-color: var(--kc-cyan); }
+.status { font-size: 0.875rem; color: var(--kc-muted); }
+@media (pointer: coarse) { .button { min-height: 44px; } }

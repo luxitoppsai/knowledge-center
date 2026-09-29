@@ -3,15 +3,16 @@ import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import {useHistory, useLocation} from '@docusaurus/router';
 import catalog from '@site/src/data/catalog.json';
-import {SaludBadge} from '@site/src/components/Salud';
+import {SaludBadge, SaludExplicacion} from '@site/src/components/Salud';
+import CopyText from '@site/src/components/CopyText';
 import {NIVELES} from '@site/src/lib/salud';
 import {construirGrafo, vecinos, nombreCorto} from '@site/src/lib/linaje';
 import styles from './linaje.module.css';
 
 // Geometría del grafo bipartito (unidades del viewBox; el SVG escala al ancho disponible).
 const ANCHO = 820;
-const FILA = 34;
-const NODO_H = 24;
+const FILA = 50;
+const NODO_H = 40;
 const PAD = 16;
 const TABLA_X0 = 8;
 const TABLA_X1 = 262;
@@ -65,6 +66,15 @@ function activar(e, fn) {
   }
 }
 
+/** Dos líneas en el grafo; el título accesible y el panel mantienen el identificador completo. */
+function EtiquetaNodo({texto, x, y, longitud = 24, anchor = 'start'}) {
+  const lineas = texto.length <= longitud ? [texto] : [texto.slice(0, longitud),
+    texto.length > longitud * 2 ? `${texto.slice(longitud, longitud * 2 - 1)}…` : texto.slice(longitud)];
+  return <text x={x} y={y + (lineas.length === 1 ? 4 : -4)} textAnchor={anchor} className={styles.etiqueta}>
+    {lineas.map((linea, i) => <tspan key={i} x={x} dy={i ? 16 : 0}>{linea}</tspan>)}
+  </text>;
+}
+
 function Grafo({grafo, activo, sel, onSel, onHover}) {
   const {alto, yTabla, yModelo, grupos} = useMemo(() => layout(grafo), [grafo]);
   const atenuado = (set, id) => activo && !set.has(id);
@@ -112,6 +122,7 @@ function Grafo({grafo, activo, sel, onSel, onHover}) {
             onKeyDown={(e) => activar(e, toggle)}
             onMouseEnter={() => onHover({tipo: 'tabla', id: t.id})}
             onFocus={() => onHover({tipo: 'tabla', id: t.id})}
+            onBlur={() => onHover(null)}
           >
             <title>{t.id}</title>
             <rect
@@ -119,9 +130,7 @@ function Grafo({grafo, activo, sel, onSel, onHover}) {
               className={elegido ? styles.rectSel : styles.rect}
             />
             <text x={TABLA_X0 + 12} y={y + 4} className={styles.cuenta}>{t.modelos.length}</text>
-            <text x={TABLA_X1 - 10} y={y + 4} textAnchor="end" className={styles.etiqueta}>
-              {nombreCorto(t.id)}
-            </text>
+            <EtiquetaNodo texto={nombreCorto(t.id)} x={TABLA_X1 - 10} y={y} anchor="end" />
           </g>
         );
       })}
@@ -138,24 +147,24 @@ function Grafo({grafo, activo, sel, onSel, onHover}) {
             tabIndex={0}
             role="button"
             aria-pressed={elegido}
-            aria-label={`Modelo ${m.nombre} de ${m.proyecto.nombre}${m.salud ? `, salud ${m.salud.score}` : ''}`}
+            aria-label={`Modelo ${m.nombre} de ${m.proyecto.nombre}${m.salud ? `, salud documental ${m.salud.score}/100` : ''}`}
             onClick={toggle}
             onKeyDown={(e) => activar(e, toggle)}
             onMouseEnter={() => onHover({tipo: 'modelo', id: m.id})}
             onFocus={() => onHover({tipo: 'modelo', id: m.id})}
+            onBlur={() => onHover(null)}
           >
             <title>{`${m.nombre} · ${m.proyecto.nombre}`}</title>
             <rect
               x={MODELO_X0} y={y - NODO_H / 2} width={MODELO_X1 - MODELO_X0} height={NODO_H} rx={6}
               className={elegido ? styles.rectSel : styles.rect}
             />
-            <text x={MODELO_X0 + 12} y={y + 4} className={styles.etiqueta}>{m.nombre}</text>
+            <EtiquetaNodo texto={m.nombre} x={MODELO_X0 + 10} y={y} />
             {n && (
               <>
-                <text x={MODELO_X1 - 26} y={y + 4} textAnchor="end" className={styles.score}>
-                  {m.salud.score}
+                <text x={MODELO_X1 - 10} y={y + 4} textAnchor="end" className={styles.score} style={{fill: n.color}}>
+                  {m.salud.score}/100
                 </text>
-                <circle cx={MODELO_X1 - 14} cy={y} r={4.5} fill={n.color} />
               </>
             )}
           </g>
@@ -177,7 +186,7 @@ function Impacto({grafo, sel, onSel}) {
       <aside className={styles.panel}>
         <h2 className={styles.panelTitulo}>Análisis de impacto</h2>
         <p className={styles.hint}>
-          Elige una tabla para ver qué modelos se afectan si cambia o se cae. También puedes elegir
+          Elige una tabla para ver los modelos que declaran depender de ella. También puedes elegir
           un modelo para ver de qué tablas depende.
         </p>
         <h3 className={styles.panelSub}>Tablas con más dependientes</h3>
@@ -204,6 +213,7 @@ function Impacto({grafo, sel, onSel}) {
       <aside className={styles.panel}>
         <p className={styles.eyebrow}>Modelo · {m.proyecto.nombre}</p>
         <h2 className={`${styles.panelTitulo} ${styles.mono}`}>{m.nombre}</h2>
+        <CopyText value={m.nombre} label="Copiar identificador" />
         {m.salud && <SaludBadge salud={m.salud} />}
         <h3 className={styles.panelSub}>Depende de {m.tablas.length} tablas</h3>
         <ul className={styles.lista}>
@@ -229,13 +239,14 @@ function Impacto({grafo, sel, onSel}) {
 
   return (
     <aside className={styles.panel} aria-live="polite">
-      <p className={styles.eyebrow}>Si cambia esta tabla</p>
-      <h2 className={`${styles.panelTitulo} ${styles.mono}`} title={t.id}>{nombreCorto(t.id)}</h2>
+      <p className={styles.eyebrow}>Dependencias declaradas de la tabla</p>
+      <h2 className={`${styles.panelTitulo} ${styles.mono}`}>{t.id}</h2>
+      <CopyText value={t.id} label="Copiar identificador" />
       <div className={styles.kpis}>
         <div><strong>{afectados.length}</strong><span>modelos</span></div>
         <div><strong>{t.proyectos.length}</strong><span>proyectos</span></div>
         <div><strong>{enProd}</strong><span>en producción</span></div>
-        <div><strong>{criticos}</strong><span>con salud crítica</span></div>
+        <div><strong>{criticos}</strong><span>con salud documental crítica</span></div>
       </div>
       {porProyecto.map((ms) => (
         <div key={ms[0].proyecto.slug} className={styles.grupoPanel}>
@@ -290,6 +301,7 @@ export default function Linaje() {
 
   const elegir = (s) => {
     setSel(s);
+    setHover(null);
     const q = s ? `?${s.tipo}=${encodeURIComponent(s.id)}` : '';
     history.replace({pathname: location.pathname, search: q});
     // en angosto el panel queda debajo de la lista: llevar la vista al resultado
@@ -301,16 +313,16 @@ export default function Linaje() {
   const coincidencias = busqueda.trim()
     ? grafo.tablas.filter((t) => t.id.toLowerCase().includes(busqueda.trim().toLowerCase())).slice(0, 6)
     : [];
-  const activo = vecinos(grafo, hover || sel);
+  const activo = vecinos(grafo, sel || hover);
   const sinLinaje = grafo.modelos.filter((m) => m.tablas.length === 0);
 
   return (
     <Layout title="Linaje" description="Linaje global: qué modelos dependen de cada tabla">
-      <div className={styles.page}>
+      <main className={styles.page}>
        <div className={styles.pageInner}>
         <header className={styles.head}>
           <p className={styles.eyebrow}>Linaje global</p>
-          <h1 className={styles.titulo}>¿Qué se rompe si cambia una tabla?</h1>
+          <h1 className={styles.titulo}>¿Qué modelos dependen de esta tabla?</h1>
           <p className={styles.sub}>
             {grafo.tablas.length} tablas fuente alimentan {grafo.modelos.length} modelos.{' '}
             {grafo.compartidas} {grafo.compartidas === 1 ? 'tabla es compartida' : 'tablas son compartidas'} entre
@@ -359,7 +371,11 @@ export default function Linaje() {
               </ul>
             )}
           </form>
+          {sel && <button type="button" className={styles.limpiar} onClick={() => {
+            elegir(null); setBusqueda('');
+          }}>Limpiar selección</button>}
         </header>
+        <SaludExplicacion />
 
         {grafo.tablas.length === 0 ? (
           <p className={styles.hint}>Ningún modelo declara todavía su linaje (sources.table_list).</p>
@@ -368,7 +384,7 @@ export default function Linaje() {
             <div className={styles.lienzo}>
               <div className={styles.columnas} aria-hidden="true">
                 <span>Tablas fuente <em>· nº de modelos</em></span>
-                <span>Modelos <em>· salud</em></span>
+                <span>Modelos <em>· salud documental /100</em></span>
               </div>
               <Grafo grafo={grafo} activo={activo} sel={sel} onSel={elegir} onHover={setHover} />
               <ListaMovil grafo={grafo} onSel={elegir} />
@@ -379,7 +395,7 @@ export default function Linaje() {
           </div>
         )}
        </div>
-      </div>
+      </main>
     </Layout>
   );
 }

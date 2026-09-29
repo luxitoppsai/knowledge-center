@@ -3,9 +3,9 @@
 **Gobierno de modelos sin fricción.** Descubre solo los repos de modelos del COE y, en cada build,
 responde las tres preguntas de quien decide:
 
-- **¿Qué modelos están en riesgo?** Un puntaje de salud explicable por modelo y la detección de
-  **doc drift**: se reentrenó y el Model Card no se actualizó.
-- **¿Qué se rompe si cambia una tabla?** Un linaje global con análisis de impacto entre proyectos.
+- **¿Qué documentación requiere revisión?** Un puntaje de salud documental explicable por modelo y la detección de
+  **doc drift**: los metadatos tienen un commit posterior al Model Card.
+- **¿Qué modelos dependen de una tabla?** Un linaje global con análisis de impacto entre proyectos.
 - **¿Cómo está el portafolio?** Una vista para comité, imprimible a PDF.
 
 Nada se llena a mano: todo se deriva de lo que ya está en los repos (sin base de datos).
@@ -24,8 +24,8 @@ Nada se llena a mano: todo se deriva de lo que ya está en los repos (sin base d
 
 1. **(0:00) Dashboard.** "5 proyectos, 9 modelos, y solo el 33% está saludable." *Requiere
    atención* no lista problemas: dice **qué hacer**, en orden. Nadie tuvo que armar esa lista.
-2. **(0:20) Clic en "Regenera el Model Card: 55 días de atraso".** El modelo `lgd_GLM` se
-   reentrenó el 9 de septiembre y su Model Card es del 16 de julio. El hub lo detectó comparando
+2. **(0:20) Clic en "Revisa el Model Card: 55 días de atraso".** Los metadatos de `lgd_GLM` tienen
+   un commit del 9 de septiembre y su Model Card es del 16 de julio. El hub lo detectó comparando
    commits, y quien abre ese Model Card ve el aviso arriba, no se entera tarde.
 3. **(0:40) Linaje → `core.hm_clientes`.** "Si esta tabla cambia, se afectan 4 modelos de 4
    proyectos y 2 están en producción." Ese es el análisis de impacto que hoy se hace con reuniones.
@@ -117,7 +117,7 @@ knowledge-center/
   .github/workflows/deploy.yml # tests → agregación → build → Pages (4 disparadores)
 ```
 
-## Salud y doc drift, en una tabla
+## Salud documental y doc drift, en una tabla
 
 | Componente | Puntos | Regla |
 | --- | --- | --- |
@@ -128,7 +128,8 @@ knowledge-center/
 
 **Saludable ≥ 80 · Atención 50–79 · Crítico < 50.** El proyecto toma la salud de su **peor**
 modelo. **Doc drift** = el último commit a `docs/<modelo>/model_data.json` (huella del
-entrenamiento) es más nuevo que el último commit a `docs/<modelo>/model-card.md`. Pesos y umbrales
+entrenamiento) es más nuevo que el último commit a `docs/<modelo>/model-card.md`. Es una señal de posible desactualización, no evidencia de reentrenamiento. El puntaje mide
+presencia documental y metadatos declarados, no calidad del contenido ni desempeño actual. Pesos y umbrales
 viven en un solo lugar: `scripts/aggregate.py`. Contrato completo:
 [`specs/RFC-002-gobierno-de-modelos/`](specs/RFC-002-gobierno-de-modelos/spec.md).
 
@@ -163,3 +164,22 @@ lugar — el botón CTA — a propósito: si aparece en todo, deja de significar
 ## Contribuir
 
 Ver [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
+## Mejoras de experiencia (RFC-005)
+
+La interfaz mantiene la identidad visual y presenta **salud documental /100**, con explicación
+accesible, filtros rotulados y conteos explícitos de proyectos. Los motivos se despliegan por
+clic, toque o teclado, y la guía de actualización permite copiar el comando del generador.
+
+El dashboard ofrece tarjetas (hasta tres modelos visibles por proyecto) y tabla, con filtros y
+vista compartibles por URL. Los KPI llevan al ranking de modelos, a pendientes, a documentos por
+revisar o a proyectos en producción. El portafolio presenta primero el ranking, cinco eventos
+expandibles, leyenda numérica de la matriz y **Imprimir / Guardar PDF**. El linaje conserva los
+nombres completos en el panel de impacto y permite limpiar la selección.
+
+En cada agregación, el Model Card presenta propósito, funcionamiento, métricas y limitaciones
+antes de la identidad técnica, conservando contenido y encabezados. El repositorio fuente y sus
+fechas de commits no se modifican. Ver [RFC-005](specs/RFC-005-claridad-y-exploracion/spec.md) y
+[verificación local reproducible](CONTRIBUTING.md#verificación-de-ux-sin-github-rfc-005).
+
+Las capturas de la tabla inicial ilustran la demo anterior a RFC-005.

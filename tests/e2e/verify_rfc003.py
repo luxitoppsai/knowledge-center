@@ -71,10 +71,10 @@ with sync_playwright() as pw:
 
         # orden por defecto: peor salud primero
         scores = page.locator("[class*=saludScore]").all_inner_texts()
-        assert [int(s) for s in scores] == sorted(int(s) for s in scores), scores
+        assert [int(s.split("/")[0]) for s in scores] == sorted(int(s.split("/")[0]) for s in scores), scores
 
         # 4. fila de atención clicable → abre el bloque del modelo en el detalle
-        page.get_by_role("link", name="Regenera el Model Card: 55 días de atraso").click()
+        page.get_by_role("link", name="Revisa el Model Card: 55 días de atraso").click()
         page.wait_for_url("**/proyecto/coeaa_riesgo_consumo#modelo-lgd_GLM_bestModel")
         bloque = page.locator("#modelo-lgd_GLM_bestModel")
         assert bloque.get_attribute("open") is not None
@@ -96,13 +96,14 @@ with sync_playwright() as pw:
         # 6. aviso de drift dentro del Model Card y su link de vuelta
         page.goto(f"{BASE}/docs/coeaa_riesgo_consumo/lgd_GLM_bestModel/model-card")
         aviso = page.locator("aside[aria-label='Ficha del modelo']")
-        assert "desactualizado (55 días)" in aviso.inner_text()
-        aviso.get_by_role("link", name="Ver la salud del modelo").click()
+        assert "posiblemente desactualizada" in aviso.inner_text() and "55 días de diferencia" in aviso.inner_text()
+        aviso.get_by_role("link", name="Revisar el modelo").click()
         page.wait_for_url("**/knowledge-center/proyecto/coeaa_riesgo_consumo#modelo-lgd_GLM_bestModel")
         print(f"[{t}] aviso de drift en el Model Card + link OK")
 
         # 7. actividad del portafolio sin jerga de commits
         page.goto(f"{BASE}/portafolio")
+        page.get_by_role("button", name="eventos más", exact=False).click()
         actividad = page.locator("[class*=actividad]").inner_text()
         for prefijo in ("chore:", "feat(", "docs("):
             assert prefijo not in actividad, prefijo

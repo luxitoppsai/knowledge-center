@@ -1,7 +1,7 @@
 .badge {
   display: inline-flex; align-items: center; gap: 0.3rem;
   padding: 0.18rem 0.55rem 0.18rem 0.4rem; border-radius: 999px;
-  font-size: 0.76rem; font-weight: 600; white-space: nowrap;
+  font-size: 0.875rem; font-weight: 600; white-space: nowrap;
 }
 .badgeIcon { width: 15px; height: 15px; flex: none; }
 .badgeScore { font-family: var(--ifm-font-family-monospace); font-weight: 700; }
@@ -19,20 +19,30 @@
   display: flex; gap: 0.5rem; align-items: flex-start;
   border-left: 3px solid var(--kc-amber); background: var(--kc-amber-bg);
   border-radius: var(--kc-radius-sm); padding: 0.55rem 0.7rem; margin-bottom: 0.9rem;
-  font-size: 0.84rem; color: var(--kc-ink);
+  font-size: 0.875rem; color: var(--kc-ink);
 }
 .drift svg { color: var(--kc-amber); margin-top: 0.1rem; }
 
 .meters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.7rem 1.2rem; }
-.meterHead { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--kc-muted); margin-bottom: 0.3rem; }
+.meterHead { display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--kc-muted); margin-bottom: 0.3rem; }
 .meterValue { font-family: var(--ifm-font-family-monospace); color: var(--kc-ink); font-variant-numeric: tabular-nums; }
 .track { height: 6px; border-radius: 4px; overflow: hidden; }
 .fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
 
-.motivos { margin: 0.9rem 0 0; padding-left: 1.1rem; font-size: 0.84rem; color: var(--kc-muted); }
+.motivos { margin: 0.9rem 0 0; padding-left: 1.1rem; font-size: 0.875rem; color: var(--kc-muted); }
 .motivos li { margin: 0.15rem 0; }
 
-.como { margin-top: 0.8rem; font-size: 0.8rem; color: var(--kc-muted); }
+.como { margin-top: 0.8rem; font-size: 0.875rem; color: var(--kc-muted); }
 .como summary { cursor: pointer; color: var(--kc-ink); font-weight: 500; }
 .como p { margin: 0.5rem 0 0; }
-.detalleTotal { font-family: var(--ifm-font-family-monospace); font-size: 0.82rem; color: var(--kc-muted); }
+.detalleTotal { font-family: var(--ifm-font-family-monospace); font-size: 0.875rem; color: var(--kc-muted); }
+
+.explicacion { margin: 0 0 1.3rem; font-size: 0.875rem; color: var(--kc-muted); max-width: 65rem; }
+.explicacion summary { cursor: pointer; color: var(--kc-cyan); font-weight: 600; }
+.explicacion p { margin: 0.5rem 0 0; line-height: 1.6; }
+.detalleHead { gap: 0.7rem; flex-wrap: wrap; }
+@media (pointer: coarse) { .explicacion summary, .como summary { min-height: 44px; display: flex; align-items: center; } }
+@media print {
+  .explicacion summary { display: none; }
+  .explicacion > p { display: block !important; font-size: 0.75rem; }
+}

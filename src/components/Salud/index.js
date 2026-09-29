@@ -1,6 +1,8 @@
 import React from 'react';
 import Icon from '@site/src/components/Icon';
 import {NIVELES, COMPONENTES} from '@site/src/lib/salud';
+import {describirMotivo} from '@site/src/lib/motivos';
+import ModelCardHelp from '@site/src/components/ModelCardHelp';
 import styles from './styles.module.css';
 
 /** Badge de salud: ícono + puntaje + etiqueta (el color nunca va solo). */
@@ -11,12 +13,24 @@ export function SaludBadge({salud, conEtiqueta = true}) {
     <span
       className={styles.badge}
       style={{color: n.color, background: n.bg}}
-      title={`Salud ${salud.score}/100 · ${n.label}`}
+      title={`Salud documental ${salud.score}/100 · ${n.label}`}
     >
       <Icon name={n.icon} className={styles.badgeIcon} />
-      <span className={styles.badgeScore}>{salud.score}</span>
+      <span className={styles.badgeScore}>{salud.score}/100</span>
       {conEtiqueta && <span className={styles.badgeLabel}>{n.label}</span>}
     </span>
+  );
+}
+
+export function SaludExplicacion() {
+  return (
+    <details className={styles.explicacion}>
+      <summary>¿Qué mide la salud documental?</summary>
+      <p>Puntaje de 0 a 100 basado en documentos presentes, su actualización respecto a los
+        metadatos y la declaración de una métrica AUC y tablas fuente. No verifica la calidad
+        del contenido ni el desempeño actual del modelo. Saludable ≥ 80 · Atención 50–79 ·
+        Crítico &lt; 50. El proyecto toma el puntaje de su peor modelo.</p>
+    </details>
   );
 }
 
@@ -49,16 +63,16 @@ function Medidor({label, valor, max}) {
 }
 
 function fmtFecha(iso) {
-  return new Date(iso).toLocaleDateString('es-PE', {year: 'numeric', month: 'short', day: 'numeric'});
+  return new Date(iso).toLocaleDateString('es-PE', {year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC'});
 }
 
 /** Bloque de salud del detalle: puntaje, 4 medidores, motivos y aviso de drift. */
-export function SaludDetalle({salud, drift}) {
+export function SaludDetalle({salud, drift, repoUrl}) {
   if (!salud) return null;
   return (
     <div className={styles.detalle}>
       <div className={styles.detalleHead}>
-        <span className={styles.detalleTitulo}>Desglose de salud</span>
+        <span className={styles.detalleTitulo}>Salud documental</span>
         <span className={styles.detalleTotal}>{salud.score}/100</span>
       </div>
 
@@ -66,9 +80,9 @@ export function SaludDetalle({salud, drift}) {
         <div className={styles.drift} role="status">
           <Icon name="clock" className={styles.badgeIcon} />
           <span>
-            <strong>Model Card desactualizado {drift.dias} {drift.dias === 1 ? 'día' : 'días'}.</strong>{' '}
-            Card del {fmtFecha(drift.fecha_card)}, metadata del {fmtFecha(drift.fecha_metadata)}.
-            Regenera con <code>/generar-model-card</code>.
+            <strong>Documentación posiblemente desactualizada.</strong>{' '}
+            Model Card: {fmtFecha(drift.fecha_card)} · Metadatos: {fmtFecha(drift.fecha_metadata)}
+            {' '}({drift.dias} {drift.dias === 1 ? 'día' : 'días'} de diferencia).
           </span>
         </div>
       )}
@@ -81,9 +95,11 @@ export function SaludDetalle({salud, drift}) {
 
       {salud.motivos.length > 0 && (
         <ul className={styles.motivos}>
-          {salud.motivos.map((m) => <li key={m}>{m}</li>)}
+          {salud.motivos.map((m) => <li key={m}>{describirMotivo(m)}</li>)}
         </ul>
       )}
+
+      {(drift || salud.componentes.frescura < salud.maximos.frescura) && <ModelCardHelp repoUrl={repoUrl} />}
 
       <details className={styles.como}>
         <summary>¿Cómo se calcula?</summary>

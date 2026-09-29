@@ -65,7 +65,7 @@ móvil, y falla ante cualquier error de consola). Necesita el catálogo real agr
 
 ```bash
 npm run build && npm run serve -- --port 3210 &
-for s in tests/e2e/verify_*.py; do
+for s in tests/e2e/verify_{rfc003,rfc004,linaje,portafolio,navbar}.py; do
   uv run --with playwright python "$s" http://localhost:3210/knowledge-center /tmp/kc-e2e || break
 done
 # en producción: mismo loop con https://luxitoppsai.github.io/knowledge-center
@@ -118,3 +118,30 @@ en el catálogo (ver arriba) para no descubrir en producción que algo solo se v
 3. Si tocaste `scripts/aggregate.py`: corré `python scripts/aggregate.py` contra datos reales y
    revisá que el `catalog.json` resultante tenga sentido (no lo comitees con datos de prueba).
 4. Actualizá `RFC.md` si el cambio es una decisión de arquitectura (no un fix cosmético).
+
+## Verificación de UX sin GitHub (RFC-005)
+
+La suite `verify_ux.py` usa una copia temporal con seis proyectos ficticios y nueve modelos,
+incluidos documentación pendiente, drift, cuatro modelos en una tarjeta y un identificador largo.
+No modifica el catálogo ni los documentos del checkout. Necesita dependencias Node instaladas,
+`requests`, `playwright` y Chromium (`python -m playwright install chromium` si no está instalado).
+
+```bash
+# Elige un directorio nuevo: el preparador rechaza destinos existentes o dentro del checkout.
+python tests/e2e/prepare_ux_fixture.py /tmp/kc-ux-fixture
+(cd /tmp/kc-ux-fixture && npm run build)
+(cd /tmp/kc-ux-fixture && npm run serve -- --host 127.0.0.1 --port 3210 --no-open)
+# En otra terminal, desde este repositorio:
+python tests/e2e/verify_ux.py http://127.0.0.1:3210/knowledge-center /tmp/kc-ux-capturas /tmp/kc-ux-fixture/src/data/catalog.json
+```
+
+Verifica clics reales en ambos temas, escritorio y móvil táctil de 390 px: copia al portapapeles,
+motivos desplegables por teclado, destinos de KPI, filtros y vista persistida en URL, tabla y
+navegación al detalle, nombres largos, Model Card con propósito antes de identidad, aviso sin
+inferir reentrenamiento, selección/limpieza de linaje, ranking antes de actividad, expansión de
+eventos, controles táctiles y contenido visible para impresión. Captura cada vista y falla ante
+errores de aplicación o desbordamiento horizontal del documento. Los fallos de red externos
+(p. ej. fuentes) se informan por separado.
+
+Las suites RFC-003/004 y linaje/portafolio/navbar siguen siendo comprobaciones complementarias
+para los repos concretos de la demo original; no deben ejecutarse contra esta fixture distinta.

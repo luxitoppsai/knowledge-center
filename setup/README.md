@@ -131,8 +131,8 @@ Esta es la pregunta que más se repite — la respuesta exacta, sin ambigüedad:
 | **Algoritmo / AUC / features / tablas de un modelo** | Modelo | Directo de `docs/<nombre_modelo>/model_data.json` (`models[0].algorithm_name`, la métrica `areaUnderROC`, `features.feature_count`, `sources.table_list`). |
 | **Narrativa de un modelo** (propósito / cómo funciona) | Modelo | Las secciones `## Propósito y uso previsto` / `## Cómo funciona` de `docs/<nombre_modelo>/model-card.md`. Si quedaron con el marcador `Por completar` de la skill de autodoc, el detalle no las muestra (no repite el placeholder). |
 | **Doc drift de un modelo** | Modelo | Fecha del último commit a `docs/<nombre_modelo>/model_data.json` vs. el último commit a `docs/<nombre_modelo>/model-card.md` (rama `develop`, si no la por defecto). Si la metadata es más nueva, hay drift y se reporta con los días de atraso. Por eso, **al reentrenar, regenera el Model Card** (`/generar-model-card`). |
-| **Salud de un modelo** (0–100) | Modelo | Documentación 50 (completitud × 0.5) + Frescura 30 (sin drift 30, drift ≤ 30 días 15, más o sin card 0) + Desempeño 10 (hay AUC) + Linaje 10 (hay `table_list`). Saludable ≥ 80, Atención 50–79, Crítico < 50. |
-| **Salud de un proyecto** | Proyecto | La del **peor** de sus modelos (un promedio escondería al modelo crítico). |
+| **Salud documental de un modelo** (0–100) | Modelo | Documentación 50 (completitud × 0.5) + Frescura 30 (sin drift 30, drift ≤ 30 días 15, más o sin card 0) + Desempeño 10 (hay AUC) + Linaje 10 (hay `table_list`). Saludable ≥ 80, Atención 50–79, Crítico < 50. |
+| **Salud documental de un proyecto** | Proyecto | La del **peor** de sus modelos (un promedio escondería al modelo crítico). |
 | **Linaje global / impacto** (`/linaje`) | Portafolio | Cruza el `sources.table_list` de todos los modelos: una tabla "compartida" es la que aparece en modelos de más de un proyecto. |
 
 Si querés cambiar alguna de estas reglas (por ejemplo, derivar "Producción" de un label del repo en
@@ -151,3 +151,13 @@ export KC_PREFIXES="coaa_,coeaa_"    # opcional — es el default
 python scripts/aggregate.py
 npm run build && npm run serve
 ```
+
+## Presentación del Model Card
+
+El hub conserva todo el contenido, pero ordena las secciones de nivel 2: propósito y uso
+previsto, cómo funciona, métricas y limitaciones primero; identidad técnica al final. Las demás
+secciones conservan su orden relativo. Los encabezados dentro de bloques de código no se
+interpretan como secciones. Esto se aplica solo a la copia de build; no modifica el repo fuente.
+
+El aviso de posible desactualización compara commits de metadatos y documento. No acredita
+reentrenamiento ni observa el desempeño del modelo en producción.

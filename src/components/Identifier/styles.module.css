@@ -1,0 +1,2 @@
+.identifier { display: inline-flex; flex-direction: column; gap: 0.3rem; max-width: 100%; min-width: 0; }
+.value { font-family: var(--ifm-font-family-monospace); overflow-wrap: anywhere; white-space: normal; }

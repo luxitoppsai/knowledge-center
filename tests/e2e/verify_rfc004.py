@@ -33,18 +33,21 @@ with sync_playwright() as pw:
         assert "salud del peor modelo" not in cards and "drift" not in cards
         fila = page.locator("[aria-labelledby=atencion-titulo] li").first
         assert "ct_LogisticRegression_bestModel" in fila.inner_text()
-        assert fila.locator("[class*=mas]").inner_text() == "+3"
+        motivos = fila.locator("details").first
+        assert motivos.locator("summary").inner_text() == "3 motivos más"
+        motivos.locator("summary").click()
+        assert motivos.locator("li").count() == 3
         print(f"[{t}] navbar, footer, copy y +N OK")
 
         # ficha en el Model Card, con drift, y markdown sin admonition de drift
         page.goto(BASE + CARD)
         ficha = page.locator("aside[aria-label='Ficha del modelo']")
         txt = ficha.inner_text()
-        for esperado in ("Riesgo Consumo", "60", "GLM", "16 jul", "desactualizado (55 días)"):
+        for esperado in ("Riesgo Consumo", "60", "GLM", "16 jul", "55 días de diferencia"):
             assert esperado in txt, (esperado, txt)
         assert page.locator(".theme-admonition-warning").count() == 0
         page.screenshot(path=OUT / f"modelcard-{t}.png", full_page=True)
-        ficha.get_by_role("link", name="Ver la salud del modelo").click()
+        ficha.get_by_role("link", name="Revisar el modelo").click()
         page.wait_for_url("**/proyecto/coeaa_riesgo_consumo#modelo-lgd_GLM_bestModel")
         # linaje y funciones: ficha sin aviso
         page.goto(BASE + "/docs/coeaa_riesgo_consumo/lgd_GLM_bestModel/lineage")
@@ -56,9 +59,9 @@ with sync_playwright() as pw:
 
         # detalle con 1 modelo: sin mini-ranking
         page.goto(BASE + "/proyecto/coaa_churn_tarjetas")
-        assert page.get_by_role("heading", name="Salud de los modelos").count() == 0
+        assert page.get_by_role("heading", name="Salud documental de los modelos").count() == 0
         page.goto(BASE + "/proyecto/coaa_pyneg_demo_activos")
-        assert page.get_by_role("heading", name="Salud de los modelos").count() == 1
+        assert page.get_by_role("heading", name="Salud documental de los modelos").count() == 1
         page.screenshot(path=OUT / f"pyneg-{t}.png", full_page=True)
         print(f"[{t}] detalle sin redundancia OK")
         ctx.close()

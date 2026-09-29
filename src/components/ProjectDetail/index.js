@@ -4,7 +4,9 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import {useLocation} from '@docusaurus/router';
 import Icon from '@site/src/components/Icon';
 import EstadoTag from '@site/src/components/EstadoTag';
-import {SaludBadge, SaludDetalle} from '@site/src/components/Salud';
+import {SaludBadge, SaludDetalle, SaludExplicacion} from '@site/src/components/Salud';
+import Identifier from '@site/src/components/Identifier';
+import ModelCardHelp from '@site/src/components/ModelCardHelp';
 import {NIVELES} from '@site/src/lib/salud';
 import {describirEvento} from '@site/src/lib/eventos';
 import styles from './styles.module.css';
@@ -58,7 +60,7 @@ function SaludModelos({modelos, onIr}) {
               {n && (
                 <span className={styles.saludScore} style={{color: n.color}}>
                   <Icon name={n.icon} className={styles.iconoMini} />
-                  {m.salud.score}
+                  {m.salud.score}/100
                 </span>
               )}
             </a>
@@ -69,7 +71,7 @@ function SaludModelos({modelos, onIr}) {
   );
 }
 
-function Modelo({projectSlug, m, abierto, onToggle}) {
+function Modelo({projectSlug, repoUrl, m, abierto, onToggle}) {
   const tablas = (m.sources && m.sources.table_list) || [];
   const dinfo = (m.sources && m.sources.dataset_info) || {};
   const linajeHref = useBaseUrl('/linaje');
@@ -114,9 +116,12 @@ function Modelo({projectSlug, m, abierto, onToggle}) {
             </>
           ) : (
             <p className={styles.vacio}>
-              Este modelo todavía no tiene narrativa. Genera su Model Card con <code>/generar-model-card</code>.
+              Este modelo todavía no tiene una descripción de su propósito y funcionamiento.
             </p>
           )}
+
+          <div className={styles.identificador}><Identifier value={m.nombre} copy /></div>
+          {sinNarrativa && presentes.includes('model-card') && !m.drift && <ModelCardHelp repoUrl={repoUrl} />}
 
           <dl className={styles.meta}>
             {meta.map(([k, v]) => (
@@ -151,7 +156,7 @@ function Modelo({projectSlug, m, abierto, onToggle}) {
         </div>
 
         <div className={styles.modeloCol}>
-          <SaludDetalle salud={m.salud} drift={m.drift} />
+          <SaludDetalle salud={m.salud} drift={m.drift} repoUrl={repoUrl} />
         </div>
       </div>
     </details>
@@ -188,7 +193,7 @@ export default function ProjectDetail({project: p}) {
 
   return (
     <Layout title={p.nombre} description={`Detalle de ${p.nombre}`}>
-      <div className={styles.page}>
+      <main className={styles.page}>
        <div className={styles.pageInner}>
         <nav className={styles.breadcrumb} aria-label="Ruta">
           <a href={useBaseUrl('/')}>Dashboard</a> <span aria-hidden="true">/</span> <span>{p.nombre}</span>
@@ -206,6 +211,8 @@ export default function ProjectDetail({project: p}) {
           </p>
         </header>
 
+        <SaludExplicacion />
+
         <div className={`${styles.resumenGrid} ${modelos.length > 1 ? '' : styles.unaColumna}`}>
           <section className={styles.panel}>
             <h2 className={styles.panelTitulo}>¿Qué es este proyecto?</h2>
@@ -222,17 +229,17 @@ export default function ProjectDetail({project: p}) {
           </section>
           {modelos.length > 1 && (
             <section className={styles.panel}>
-              <h2 className={styles.panelTitulo}>Salud de los modelos</h2>
+              <h2 className={styles.panelTitulo}>Salud documental de los modelos</h2>
               <SaludModelos modelos={modelos} onIr={ir} />
             </section>
           )}
         </div>
 
         <section>
-          <h2 className={styles.seccionTitulo}>Modelos ({modelos.length})</h2>
+          <h2 id="modelos" className={styles.seccionTitulo}>Modelos ({modelos.length})</h2>
           <div className={styles.modelos}>
             {modelos.map((m) => (
-              <Modelo key={m.nombre} projectSlug={p.slug} m={m} abierto={!!abiertos[m.nombre]} onToggle={toggle} />
+              <Modelo key={m.nombre} projectSlug={p.slug} repoUrl={p.repo_url} m={m} abierto={!!abiertos[m.nombre]} onToggle={toggle} />
             ))}
           </div>
         </section>
@@ -257,7 +264,7 @@ export default function ProjectDetail({project: p}) {
           )}
         </details>
        </div>
-      </div>
+      </main>
     </Layout>
   );
 }

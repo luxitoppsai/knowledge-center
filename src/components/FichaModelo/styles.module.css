@@ -2,22 +2,24 @@
   border: 1px solid var(--kc-border); border-radius: var(--kc-radius-lg);
   background: var(--kc-surface); padding: 0.9rem 1.1rem; margin-bottom: 1.6rem;
 }
-.fila { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; font-size: 0.8rem; margin-bottom: 0.7rem; }
+.fila { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; font-size: 0.875rem; margin-bottom: 0.7rem; }
 .proyecto { font-weight: 600; color: var(--kc-ink); }
 .proyecto:hover { color: var(--kc-cyan); text-decoration: none; }
 .tipo {
-  margin-left: auto; font-family: var(--ifm-font-family-monospace); font-size: 0.72rem;
+  margin-left: auto; font-family: var(--ifm-font-family-monospace); font-size: 0.875rem;
   color: var(--kc-muted); text-transform: uppercase; letter-spacing: 0.08em;
 }
 .datos { display: flex; flex-wrap: wrap; gap: 0.6rem 1.8rem; }
 .datos > div { display: flex; flex-direction: column; gap: 0.15rem; }
-.label { font-size: 0.7rem; color: var(--kc-muted); }
+.label { font-size: 0.875rem; color: var(--kc-muted); }
 .valor { font-size: 0.92rem; font-weight: 600; color: var(--kc-ink); font-variant-numeric: tabular-nums; }
 .salud:hover { text-decoration: none; filter: brightness(1.05); }
 .drift {
   display: flex; gap: 0.55rem; align-items: flex-start; margin: 0.9rem 0 0;
   border-left: 3px solid var(--kc-amber); background: var(--kc-amber-bg);
-  border-radius: var(--kc-radius-sm); padding: 0.6rem 0.8rem; font-size: 0.86rem; color: var(--kc-ink);
+  border-radius: var(--kc-radius-sm); padding: 0.6rem 0.8rem; font-size: 0.875rem; color: var(--kc-ink);
 }
 .drift a { color: var(--kc-ink); text-decoration: underline; text-underline-offset: 2px; }
 .icono { width: 16px; height: 16px; flex: none; color: var(--kc-amber); margin-top: 0.15rem; }
+
+.identificador { margin: 0 0 0.9rem; font-size: 0.9rem; }

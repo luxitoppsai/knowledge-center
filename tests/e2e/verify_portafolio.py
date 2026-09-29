@@ -21,7 +21,7 @@ with sync_playwright() as pw:
         page.evaluate(f"localStorage.setItem('theme', '{tema}')")
         page.reload()
         assert page.evaluate("document.documentElement.dataset.theme") == tema
-        pct_dash = page.locator("text=modelos saludables").locator("xpath=..").inner_text().split("\n")[0]
+        pct_dash = page.locator("text=modelos con documentación saludable").locator("xpath=..").inner_text().split("\n")[0]
 
         page.get_by_role("link", name="Portafolio", exact=True).click()
         page.wait_for_url("**/portafolio")
@@ -39,7 +39,7 @@ with sync_playwright() as pw:
         # hover en la peor barra → motivos
         page.locator("[class*=fila_]").first.hover()
         tip = page.locator("[class*=tooltip]").inner_text()
-        assert "ct_LogisticRegression_bestModel" in tip and "Genera el Model Card" in tip, tip
+        assert "ct_LogisticRegression_bestModel" in tip and "Model Card pendiente" in tip, tip
         print(f"[{tema}] tooltip OK")
         page.screenshot(path=OUT / f"portafolio-{tema}.png", full_page=True)
 
