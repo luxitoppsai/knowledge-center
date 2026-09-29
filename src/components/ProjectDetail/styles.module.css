@@ -130,3 +130,8 @@
   .tlItem { grid-template-columns: 0.8rem minmax(0, 1fr); }
   .tlItem a { grid-column: 2; }
 }
+
+/* RFC-004 R7 */
+.unaColumna { grid-template-columns: minmax(0, 1fr); }
+.sinNarrativa { grid-template-columns: minmax(0, 1fr); }
+.sinNarrativa > .modeloCol:last-child { order: -1; }

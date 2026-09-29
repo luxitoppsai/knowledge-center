@@ -183,3 +183,20 @@ body {
   }
   body { background: #ffffff; }
 }
+
+/* --- Documentos de modelos (RFC-004 R3): escala contenida y tablas del sistema --- */
+.markdown h1 { font-size: clamp(1.6rem, 3vw, 2.1rem); }
+.markdown h2 { font-size: 1.3rem; margin-top: 2rem; }
+.markdown h3 { font-size: 1.05rem; }
+.markdown th { font-size: 0.8rem; font-weight: 600; text-align: left; color: var(--kc-muted); }
+.markdown td { font-size: 0.9rem; }
+@media (min-width: 997px) {
+  .markdown table { display: table; width: 100%; }
+}
+
+/* --- Footer liviano (RFC-004 R4) --- */
+.footer {
+  --ifm-footer-padding-vertical: 1.1rem;
+  background: transparent; border-top: 1px solid var(--kc-border);
+}
+.footer__copyright { font-size: 0.8rem; color: var(--kc-muted); }

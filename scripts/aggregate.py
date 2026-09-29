@@ -372,39 +372,6 @@ def resumen_proyecto(full_name: str) -> str | None:
     return None
 
 
-_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "set", "oct", "nov", "dic"]
-
-
-def _fecha_corta(iso: str) -> str:
-    d = _dt(iso)
-    return f"{d.day} {_MESES[d.month - 1]} {d.year}"
-
-
-def aviso_drift(model_card_md: str, drift: dict, url_detalle: str) -> str:
-    """Inserta un aviso de drift bajo el título del Model Card publicado (RFC-003 R4).
-
-    Solo afecta la copia que publica el hub (vista computada): el repo fuente no se toca.
-
-    :param model_card_md: Model Card tal como está en el repo.
-    :param drift: Salida de :func:`calcular_drift` (no ``None``).
-    :param url_detalle: Ruta del sitio al bloque del modelo en su detalle.
-    :returns: El Model Card con el aviso después del primer ``# título`` (o al inicio del cuerpo).
-    """
-    aviso = (
-        f":::warning Model Card desactualizado ({drift['dias']} días)\n"
-        f"El modelo se reentrenó el {_fecha_corta(drift['fecha_metadata'])} "
-        f"(`model_data.json`) y este Model Card es del {_fecha_corta(drift['fecha_card'])}: "
-        f"puede no describir el modelo actual. [Ver la salud del modelo]({url_detalle}).\n"
-        ":::\n\n"
-    )
-    m = re.search(r"^# .*\n+", model_card_md, re.M)
-    if m:
-        return model_card_md[: m.end()] + aviso + model_card_md[m.end():]
-    fm = re.match(r"---\n.*?\n---\n+", model_card_md, re.S)
-    corte = fm.end() if fm else 0
-    return model_card_md[:corte] + aviso + model_card_md[corte:]
-
-
 def _auc(meta: dict) -> float | None:
     for m in meta.get("models", []) or []:
         for ev in (((m.get("metrics") or {}).get("test") or {}).get("evaluation_metrics_data") or []):
@@ -455,11 +422,6 @@ def procesar_modelo(full: str, slug: str, modelo_cfg: dict) -> dict:
         "metadata": fecha_ultimo_commit(full, f"{ruta_docs}/model_data.json") if md_raw else None,
     }
     drift = calcular_drift(fechas["card"], fechas["metadata"])
-    if drift:
-        (destino / "model-card.md").write_text(
-            aviso_drift(model_card_md, drift, f"/proyecto/{slug}#modelo-{nombre_modelo}"),
-            encoding="utf-8",
-        )
     auc = _auc(meta)
     tablas = (meta.get("sources") or {}).get("table_list") or []
     faltantes = [d for d in DOCS_ESPERADOS if d not in presentes]

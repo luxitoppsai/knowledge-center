@@ -53,6 +53,11 @@
 .atencionItem:hover { background: var(--kc-chip-bg); text-decoration: none; color: var(--kc-ink); }
 .atencionItem:hover .flecha { color: var(--kc-cyan); transform: translateX(2px); }
 .atencionAccion { font-size: 0.9rem; font-weight: 500; }
+.mas {
+  margin-left: 0.5rem; font-family: var(--ifm-font-family-monospace); font-size: 0.72rem;
+  color: var(--kc-muted); border: 1px solid var(--kc-border); border-radius: 999px; padding: 0 0.4rem;
+  white-space: nowrap;
+}
 .atencionDonde { display: flex; flex-direction: column; min-width: 0; font-size: 0.78rem; }
 .atencionDonde .mono { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .atencionProyecto { color: var(--kc-muted); font-size: 0.74rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -114,8 +119,7 @@
   font-size: 2rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
 }
 .saludIcono { width: 22px; height: 22px; }
-.saludTexto { display: flex; flex-direction: column; font-size: 0.74rem; color: var(--kc-muted); line-height: 1.3; }
-.saludTexto strong { color: var(--kc-ink); font-size: 0.86rem; }
+.saludTexto { color: var(--kc-ink); font-size: 0.92rem; }
 .cardVacio { color: var(--kc-muted); font-size: 0.82rem; margin: 0 0 0.7rem; }
 .cardResumen { font-size: 0.8rem; color: var(--kc-muted); margin: 0 0 0.6rem; }
 .modelos { list-style: none; margin: 0 0 0.9rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
@@ -147,4 +151,10 @@
   .buscador { max-width: none; }
   .selects { margin-left: 0; width: 100%; order: 3; }
   .selects select { flex: 1; }
+}
+
+/* zonas táctiles (RFC-004 R8): ≥ 44 px con puntero grueso */
+@media (pointer: coarse) {
+  .chip, .selects select, .verMas, .buscador { min-height: 44px; }
+  .repo, .verDetalle { display: inline-flex; align-items: center; min-height: 44px; }
 }

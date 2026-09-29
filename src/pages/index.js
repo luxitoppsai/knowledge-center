@@ -59,7 +59,14 @@ function AtencionItem({m}) {
     <li>
       <a className={styles.atencionItem} href={href}>
         <SaludBadge salud={m.salud} conEtiqueta={false} />
-        <span className={styles.atencionAccion}>{m.salud.motivos[0]}</span>
+        <span className={styles.atencionAccion}>
+          {m.salud.motivos[0]}
+          {m.salud.motivos.length > 1 && (
+            <span className={styles.mas} title={m.salud.motivos.slice(1).join('\n')}>
+              +{m.salud.motivos.length - 1}
+            </span>
+          )}
+        </span>
         <span className={styles.atencionDonde}>
           <span className={styles.mono}>{m.nombre}</span>
           <span className={styles.atencionProyecto}>{m.proyecto.nombre}</span>
@@ -172,7 +179,7 @@ function Card({p}) {
   const resumen = [
     `${p.n_modelos} ${p.n_modelos === 1 ? 'modelo' : 'modelos'}`,
     `${p.modelos_completos}/${p.n_modelos} con doc completa`,
-    conDrift ? `${conDrift} con drift` : null,
+    conDrift ? `${conDrift} Model Card desactualizado${conDrift > 1 ? 's' : ''}` : null,
   ].filter(Boolean);
 
   return (
@@ -190,10 +197,7 @@ function Card({p}) {
             <Icon name={n.icon} className={styles.saludIcono} />
             {p.salud.score}
           </span>
-          <span className={styles.saludTexto}>
-            <strong>{n.label}</strong>
-            <span>salud del peor modelo</span>
-          </span>
+          <strong className={styles.saludTexto}>{n.label}</strong>
         </div>
       ) : (
         <p className={styles.cardVacio}>Sin modelos declarados en config/mlops_config.json</p>
@@ -266,6 +270,7 @@ export default function Home() {
             <h2 id="proyectos-titulo" className={styles.seccionTitulo}>
               Proyectos <span className={styles.contador}>{filtrados.length}</span>
             </h2>
+            <span className={styles.seccionHint}>La salud de un proyecto es la de su peor modelo</span>
             {hayFiltros && <button className={styles.verMas} onClick={limpiar}>Limpiar filtros</button>}
             <Selects f={f} set={set} areas={areas} />
           </div>

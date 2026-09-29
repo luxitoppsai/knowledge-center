@@ -145,18 +145,6 @@ def test_intro_readme_ignora_codigo_y_sin_intro():
     assert ag.intro_readme("# T\n\n## Solo secciones\n\nx") is None
 
 
-# --- aviso_drift -------------------------------------------------------------------------------
-
-def test_aviso_drift_bajo_el_titulo():
-    md = "---\nid: model-card\n---\n\n# pd_model\n\n## Identidad\n"
-    out = ag.aviso_drift(md, _drift(55), "/proyecto/p#modelo-pd_model")
-    titulo, resto = out.split("# pd_model\n\n", 1)
-    assert titulo.startswith("---\nid: model-card")
-    assert resto.startswith(":::warning Model Card desactualizado (55 días)")
-    assert "reentrenó el 9 set 2026" in resto and "es del 16 jul 2026" in resto
-    assert "(/proyecto/p#modelo-pd_model)" in resto and resto.endswith("## Identidad\n")
-
-
 # --- peor_salud --------------------------------------------------------------------------------
 
 def test_proyecto_toma_el_peor_modelo():

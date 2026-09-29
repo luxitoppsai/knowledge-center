@@ -75,6 +75,8 @@ function Modelo({projectSlug, m, abierto, onToggle}) {
   const linajeHref = useBaseUrl('/linaje');
   const cardHref = useBaseUrl(m.doc_url || '/');
   const presentes = m.docs_presentes || [];
+  // sin narrativa la columna de texto queda casi vacía: la salud (qué falta) va primero, a lo ancho
+  const sinNarrativa = !m.resumen_proposito && !m.resumen_como_funciona;
   const esperados = m.docs_esperados || [];
   const meta = [
     m.algoritmo && ['Algoritmo', `${m.algoritmo}${m.flavour && m.flavour.toLowerCase() !== m.algoritmo.toLowerCase() ? ` · ${m.flavour}` : ''}`],
@@ -98,7 +100,7 @@ function Modelo({projectSlug, m, abierto, onToggle}) {
         <span className={styles.chevron} aria-hidden="true">▸</span>
       </summary>
 
-      <div className={styles.modeloCuerpo}>
+      <div className={`${styles.modeloCuerpo} ${sinNarrativa ? styles.sinNarrativa : ''}`}>
         <div className={styles.modeloCol}>
           {m.resumen_proposito || m.resumen_como_funciona ? (
             <>
@@ -204,7 +206,7 @@ export default function ProjectDetail({project: p}) {
           </p>
         </header>
 
-        <div className={styles.resumenGrid}>
+        <div className={`${styles.resumenGrid} ${modelos.length > 1 ? '' : styles.unaColumna}`}>
           <section className={styles.panel}>
             <h2 className={styles.panelTitulo}>¿Qué es este proyecto?</h2>
             {p.resumen_proyecto ? (
@@ -218,7 +220,7 @@ export default function ProjectDetail({project: p}) {
               </p>
             )}
           </section>
-          {modelos.length > 0 && (
+          {modelos.length > 1 && (
             <section className={styles.panel}>
               <h2 className={styles.panelTitulo}>Salud de los modelos</h2>
               <SaludModelos modelos={modelos} onIr={ir} />

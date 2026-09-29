@@ -1,6 +1,9 @@
 // @ts-check
 const {themes} = require('prism-react-renderer');
 
+// vista computada: los datos valen a la fecha del build, no a la de quien mira la página
+const fechaBuild = new Date().toISOString();
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Knowledge Center',
@@ -15,8 +18,7 @@ const config = {
 
   onBrokenLinks: 'warn',
 
-  // vista computada: los datos valen a la fecha del build, no a la de quien mira la página
-  customFields: {fechaBuild: new Date().toISOString()},
+  customFields: {fechaBuild},
 
   headTags: [
     {tagName: 'link', attributes: {rel: 'preconnect', href: 'https://fonts.googleapis.com'}},
@@ -64,12 +66,11 @@ const config = {
           {to: '/portafolio', label: 'Portafolio', position: 'left'},
           {to: '/linaje', label: 'Linaje', position: 'left'},
           {to: '/docs/intro', label: 'Documentación', position: 'left'},
-          {href: 'https://github.com/luxitoppsai', label: 'GitHub', position: 'right'},
         ],
       },
       footer: {
-        style: 'dark',
-        copyright: `Knowledge Center · vista computada del ecosistema de modelos · ${new Date().getFullYear()}`,
+        style: 'light',
+        copyright: `Knowledge Center · datos al ${new Date(fechaBuild).toLocaleDateString('es-PE', {day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC'})}`,
       },
       mermaid: {theme: {light: 'neutral', dark: 'dark'}},
       prism: {theme: themes.vsDark, darkTheme: themes.vsDark},
