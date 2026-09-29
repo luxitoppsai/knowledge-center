@@ -58,6 +58,8 @@ const config = {
         logo: {alt: 'KC', src: 'img/logo.svg'},
         items: [
           {to: '/', label: 'Dashboard', position: 'left'},
+          {to: '/portafolio', label: 'Portafolio', position: 'left'},
+          {to: '/linaje', label: 'Linaje', position: 'left'},
           {to: '/docs/intro', label: 'Documentación', position: 'left'},
           {href: 'https://github.com/luxitoppsai', label: 'GitHub', position: 'right'},
         ],

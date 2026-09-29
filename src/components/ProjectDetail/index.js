@@ -101,6 +101,7 @@ function ModeloSection({projectSlug, m}) {
   const est = estadoModelo(m.completitud);
   const tablas = (m.sources && m.sources.table_list) || [];
   const dinfo = (m.sources && m.sources.dataset_info) || {};
+  const linajeHref = useBaseUrl('/linaje');
 
   return (
     <section className={`${styles.card} ${styles.modeloCard}`} id={`modelo-${m.nombre}`}>
@@ -154,7 +155,9 @@ function ModeloSection({projectSlug, m}) {
           <ul className={styles.tableList}>
             {tablas.map((t) => (
               <li key={t}>
-                <code>{t}</code>
+                <a href={`${linajeHref}?tabla=${encodeURIComponent(t)}`} title="Ver qué otros modelos usan esta tabla">
+                  <code>{t}</code>
+                </a>
                 {dinfo[t] && <span className={styles.tableCols}> — {dinfo[t].join(', ')}</span>}
               </li>
             ))}
