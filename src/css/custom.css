@@ -50,6 +50,12 @@
   /* rojo: SOLO estado crítico de salud (color de estado reservado, nunca serie de datos) */
   --kc-red: #c42b2b;
   --kc-red-bg: rgba(196, 43, 43, 0.10);
+  /* rampa secuencial (un tono, más = más oscuro), validada ordinal vs #ffffff con el validador
+     de la skill dataviz; la tinta de cada escalón asegura contraste del número en la celda */
+  --kc-seq-1: #86b6ef; --kc-seq-ink-1: #0b0b0b;
+  --kc-seq-2: #3987e5; --kc-seq-ink-2: #0b0b0b;
+  --kc-seq-3: #1c5cab; --kc-seq-ink-3: #ffffff;
+  --kc-seq-4: #0d366b; --kc-seq-ink-4: #ffffff;
   --kc-btn-ink: #ffffff;
   --kc-blob-1: rgba(8, 145, 178, 0.08);
   --kc-blob-2: rgba(147, 51, 234, 0.07);
@@ -92,6 +98,11 @@ html[data-theme='dark'] {
   --kc-slate-bg: rgba(148, 163, 184, 0.14);
   --kc-red: #f87171;
   --kc-red-bg: rgba(248, 113, 113, 0.14);
+  /* en oscuro "más" = más claro: escalones propios, validados vs #0c1120 */
+  --kc-seq-1: #184f95; --kc-seq-ink-1: #ffffff;
+  --kc-seq-2: #256abf; --kc-seq-ink-2: #ffffff;
+  --kc-seq-3: #3987e5; --kc-seq-ink-3: #0b0b0b;
+  --kc-seq-4: #86b6ef; --kc-seq-ink-4: #0b0b0b;
   --kc-btn-ink: #06121a;
   --kc-blob-1: rgba(34, 211, 238, 0.08);
   --kc-blob-2: rgba(168, 85, 247, 0.08);
@@ -146,4 +157,29 @@ body {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* Impresión/PDF: el papel es blanco, así que siempre la paleta clara, aunque el tema sea oscuro */
+@media print {
+  html[data-theme] {
+    --ifm-background-color: #ffffff;
+    --ifm-background-surface-color: #ffffff;
+    --ifm-color-content: #131a2c;
+    --ifm-heading-color: #0c1120;
+    --kc-ink: #131a2c;
+    --kc-muted: #5b6478;
+    --kc-surface: #ffffff;
+    --kc-border: rgba(15, 23, 42, 0.18);
+    --kc-track: rgba(15, 23, 42, 0.18);
+    --kc-chip-bg: rgba(15, 23, 42, 0.04);
+    --kc-cyan: #0891b2;
+    --kc-green: #059669; --kc-green-bg: rgba(5, 150, 105, 0.10);
+    --kc-amber: #b45309; --kc-amber-bg: rgba(180, 83, 9, 0.10);
+    --kc-red: #c42b2b; --kc-red-bg: rgba(196, 43, 43, 0.10);
+    --kc-seq-1: #86b6ef; --kc-seq-ink-1: #0b0b0b;
+    --kc-seq-2: #3987e5; --kc-seq-ink-2: #0b0b0b;
+    --kc-seq-3: #1c5cab; --kc-seq-ink-3: #ffffff;
+    --kc-seq-4: #0d366b; --kc-seq-ink-4: #ffffff;
+  }
+  body { background: #ffffff; }
 }

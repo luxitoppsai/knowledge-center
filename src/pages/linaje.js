@@ -273,7 +273,8 @@ export default function Linaje() {
   const grafo = useMemo(() => construirGrafo(catalog), []);
   const location = useLocation();
   const history = useHistory();
-  const [sel, setSel] = useState(() => leerSeleccion(location.search));
+  // arranca sin selección (igual que el HTML estático) y la toma de la URL tras hidratar
+  const [sel, setSel] = useState(null);
   const [hover, setHover] = useState(null);
   const [busqueda, setBusqueda] = useState('');
 

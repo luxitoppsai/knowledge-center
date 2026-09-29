@@ -1,6 +1,8 @@
 import React, {useState, useMemo} from 'react';
 import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import {useHistory, useLocation} from '@docusaurus/router';
+import useIsBrowser from '@docusaurus/useIsBrowser';
 import catalog from '@site/src/data/catalog.json';
 import ProgressRing from '@site/src/components/ProgressRing';
 import {SaludBadge} from '@site/src/components/Salud';
@@ -125,8 +127,22 @@ function Atencion({modelos}) {
 }
 
 export default function Home() {
-  const [area, setArea] = useState('');
-  const [estado, setEstado] = useState('');
+  // filtros en la URL (?area=&estado=): vistas compartibles y destino de la matriz del portafolio
+  // el HTML estático se genera sin query: se aplica recién tras hidratar para no desincronizar
+  const location = useLocation();
+  const history = useHistory();
+  const isBrowser = useIsBrowser();
+  const q = new URLSearchParams(isBrowser ? location.search : '');
+  const area = q.get('area') || '';
+  const estado = q.get('estado') || '';
+  const setFiltro = (clave, valor) => {
+    const nq = new URLSearchParams(location.search);
+    if (valor) nq.set(clave, valor);
+    else nq.delete(clave);
+    history.replace({pathname: location.pathname, search: nq.toString() ? `?${nq}` : ''});
+  };
+  const setArea = (v) => setFiltro('area', v);
+  const setEstado = (v) => setFiltro('estado', v);
 
   const areas = useMemo(() => [...new Set(catalog.map((p) => p.area).filter(Boolean))].sort(), []);
   const filtrados = catalog.filter(

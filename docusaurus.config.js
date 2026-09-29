@@ -15,6 +15,9 @@ const config = {
 
   onBrokenLinks: 'warn',
 
+  // vista computada: los datos valen a la fecha del build, no a la de quien mira la página
+  customFields: {fechaBuild: new Date().toISOString()},
+
   headTags: [
     {tagName: 'link', attributes: {rel: 'preconnect', href: 'https://fonts.googleapis.com'}},
     {tagName: 'link', attributes: {rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous'}},
