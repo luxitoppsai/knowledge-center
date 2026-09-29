@@ -167,19 +167,39 @@ El MVP demostrable es F1 + F2: ciclo cerrado más salud y drift visibles en el d
 
 ## 9. Criterios de aceptación
 
-- [ ] Un issue en el dispatcher crea un repo `coaa_*` multi-modelo y aparece en el dashboard
+- [x] Un issue en el dispatcher crea un repo `coaa_*` multi-modelo y aparece en el dashboard
       publicado sin edición manual (R1.1–R1.5).
-- [ ] Un modelo cuyo `model_data.json` es más nuevo que su `model-card.md` muestra drift con los
+- [x] Un modelo cuyo `model_data.json` es más nuevo que su `model-card.md` muestra drift con los
       días correctos, y su puntaje de salud coincide con la tabla de R2.3 (verificado con test).
-- [ ] La franja "Requiere atención" lista exactamente los modelos con puntaje < 80.
-- [ ] En `/linaje`, clicar una tabla compartida entre dos proyectos resalta los modelos de ambos y
+- [x] La franja "Requiere atención" lista exactamente los modelos con puntaje < 80.
+- [x] En `/linaje`, clicar una tabla compartida entre dos proyectos resalta los modelos de ambos y
       el panel de impacto muestra conteos correctos.
-- [ ] `/portafolio` muestra KPIs coherentes con el dashboard y se imprime legible en A4.
-- [ ] `pytest` corre en CI antes del build; un test roto bloquea el deploy.
-- [ ] Todo verificado con Playwright (clics reales, ambos temas, cero errores de consola) en
+- [x] `/portafolio` muestra KPIs coherentes con el dashboard y se imprime legible en A4.
+- [x] `pytest` corre en CI antes del build; un test roto bloquea el deploy.
+- [x] Todo verificado con Playwright (clics reales, ambos temas, cero errores de consola) en
       producción, siguiendo la lección de RFC-001 §11.
 
-## 10. Preguntas abiertas: cerradas el 2026-09-29
+## 10. Bitácora de ejecución (2026-09-29)
+
+Implementado completo y verificado en producción con Playwright (clics reales, ambos temas,
+móvil, impresión a PDF y cero errores de consola). Hallazgos que no estaban en el plan:
+
+- **El dispatcher nunca había corrido en Actions.** RFC-001 lo daba por probado, pero solo se
+  había ejecutado en local. Tenía 4 fallas escondidas: el label del issue no existía, el runner no
+  tiene `uvx`, el template privado no se podía clonar y faltaba el secret de `notify-hub`. Se
+  corrigieron las 4 y el issue #1 creó `coaa_recomendador_de_seguros`, que apareció solo en Pages.
+- **El workflow de deploy estaba deshabilitado por inactividad** (60 días sin commits), así que
+  ignoraba el `repository_dispatch` sin avisar. Se rehabilitó.
+- **Hidratación:** leer `?area=`/`?tabla=` en el primer render rompía la hidratación (React
+  #418/#425), porque el HTML estático no conoce el query. Ahora se aplica tras hidratar.
+- **Impresión:** con el tema oscuro por defecto, el PDF salía con títulos invisibles. Se agregó un
+  bloque `@media print` con la paleta clara.
+- **Se repitió el gotcha de `margin:auto` en un hijo flex** (RFC-001 §14) en la página nueva de
+  linaje. Se detectó en la captura y se aplicó el patrón externo/interno.
+- **Pendiente manual (Luis):** crear el secret `KC_DISPATCH_TOKEN` (fine-grained, acotado al hub)
+  en el dispatcher.
+
+## 11. Preguntas abiertas: cerradas el 2026-09-29
 
 1. Pesos y umbrales de salud (R2.3): **aceptados tal cual**.
 2. Repos demo viejos `kc-*`: **se archivan** (T05); los reemplazan demos nuevas (T14).
