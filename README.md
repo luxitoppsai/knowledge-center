@@ -1,10 +1,36 @@
 # Knowledge Center
 
-Dashboard + documentación viva de los repos de modelos del COE. Descubre repos automáticamente,
-jala su documentación fresca en cada build, y publica un sitio estático (Docusaurus) con un mapa
-navegable, filtros, semáforo de estado y el Model Card de cada proyecto.
+**Gobierno de modelos sin fricción.** Descubre solo los repos de modelos del COE y, en cada build,
+responde las tres preguntas de quien decide:
+
+- **¿Qué modelos están en riesgo?** Un puntaje de salud explicable por modelo y la detección de
+  **doc drift**: se reentrenó y el Model Card no se actualizó.
+- **¿Qué se rompe si cambia una tabla?** Un linaje global con análisis de impacto entre proyectos.
+- **¿Cómo está el portafolio?** Una vista para comité, imprimible a PDF.
+
+Nada se llena a mano: todo se deriva de lo que ya está en los repos (sin base de datos).
 
 **En vivo:** https://luxitoppsai.github.io/knowledge-center/
+
+| Dashboard + "Requiere atención" | Linaje: impacto de una tabla |
+| --- | --- |
+| ![Dashboard](static/img/readme/dashboard.png) | ![Linaje](static/img/readme/linaje.png) |
+| **Portafolio para comité** | **Salud y drift de un modelo** |
+| ![Portafolio](static/img/readme/portafolio.png) | ![Salud](static/img/readme/salud-drift.png) |
+
+## Demo en 90 segundos
+
+1. **(0:00) Dashboard.** "5 proyectos, 9 modelos, y solo el 33% está saludable." La franja
+   *Requiere atención* ordena lo urgente: nadie tuvo que armar esa lista.
+2. **(0:20) Clic en `lgd_GLM_bestModel`.** Salud 60: el modelo se reentrenó el 9 de septiembre y
+   su Model Card es del 16 de julio, **55 días de atraso**. El hub lo detectó comparando commits,
+   no porque alguien lo reportara.
+3. **(0:40) Linaje → `core.hm_clientes`.** "Si esta tabla cambia, se afectan 4 modelos de 4
+   proyectos y 2 están en producción." Ese es el análisis de impacto que hoy se hace con reuniones.
+4. **(1:00) Portafolio.** La vista para comité: matriz área × estado, ranking de salud y actividad
+   reciente. Se imprime a PDF tal cual.
+5. **(1:15) El cierre.** Un issue en el dispatcher crea un repo nuevo, y minutos después aparece
+   aquí solo. Cero pasos manuales entre piezas.
 
 ## La idea en un párrafo
 
@@ -66,26 +92,48 @@ graph TD
 
 ```
 knowledge-center/
-  scripts/aggregate.py         # el corazón: descubre, jala, deriva el catálogo
+  scripts/aggregate.py         # el corazón: descubre, jala, deriva el catálogo (salud y drift incluidos)
+  tests/test_aggregate.py      # tests de las funciones puras; corren en CI antes de publicar
   plugins/project-pages/       # plugin Docusaurus: genera /proyecto/<slug> en build time
   src/
-    pages/index.js             # el dashboard (landing)
+    pages/index.js             # dashboard (landing) + "Requiere atención"
+    pages/linaje.js            # linaje global + análisis de impacto
+    pages/portafolio.js        # vista de portafolio para comité
+    lib/salud.js, lib/linaje.js  # lógica de presentación compartida (grafo, niveles de salud)
+    components/Salud/          # badge y bloque de salud (medidores, motivos, drift)
     components/ProjectDetail/  # la página de detalle por proyecto
     components/ProgressRing/   # anillo de completitud (SVG)
     components/Icon/           # set de iconos propio (sin librería)
-    css/custom.css             # tokens de diseño (claro/oscuro), tipografía, tema del Model Card
-    data/catalog.json           # versionado con placeholder vacío; el build real lo sobreescribe
-  docs/intro.md                 # única página de docs versionada — el resto (docs/<slug>/*) es
-                                 # temporal, se re-descarga en cada build (gitignored)
-  setup/                        # referencia para integrar un repo de proyecto (ver arriba)
-  .github/workflows/deploy.yml  # el pipeline de 4 disparadores
+    css/custom.css             # tokens de diseño (claro/oscuro/impresión), estados, rampa secuencial
+    data/catalog.json          # versionado con placeholder vacío; el build real lo sobreescribe
+  docs/intro.md                # única página de docs versionada — el resto (docs/<slug>/*) es
+                               # temporal, se re-descarga en cada build (gitignored)
+  specs/                       # RFCs en formato SDD (spec / plan / tasks)
+  setup/                       # referencia para integrar un repo de proyecto (ver arriba)
+  .github/workflows/deploy.yml # tests → agregación → build → Pages (4 disparadores)
 ```
+
+## Salud y doc drift, en una tabla
+
+| Componente | Puntos | Regla |
+| --- | --- | --- |
+| Documentación | 50 | % de docs esperados presentes (Model Card, linaje, funciones) × 0.5 |
+| Frescura | 30 | 30 si el Model Card está al día · 15 con drift ≤ 30 días · 0 con más o sin card |
+| Desempeño declarado | 10 | hay métrica (AUC) en `model_data.json` |
+| Linaje declarado | 10 | `sources.table_list` tiene al menos una tabla |
+
+**Saludable ≥ 80 · Atención 50–79 · Crítico < 50.** El proyecto toma la salud de su **peor**
+modelo. **Doc drift** = el último commit a `docs/<modelo>/model_data.json` (huella del
+entrenamiento) es más nuevo que el último commit a `docs/<modelo>/model-card.md`. Pesos y umbrales
+viven en un solo lugar: `scripts/aggregate.py`. Contrato completo:
+[`specs/RFC-002-gobierno-de-modelos/`](specs/RFC-002-gobierno-de-modelos/spec.md).
 
 ## Correrlo localmente
 
 ```bash
 npm install
-pip install requests
+pip install requests pytest
+pytest -q                        # tests del agregador (sin red ni token)
 
 # 1. Agregar el catálogo real (necesita un token con acceso a tus repos coaa_*/coeaa_*)
 export KC_OWNER=tu-usuario-github

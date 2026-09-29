@@ -4,7 +4,7 @@
 
 ```bash
 npm install
-pip install requests   # única dependencia de scripts/aggregate.py
+pip install requests pytest   # requests: agregador · pytest: sus tests (pytest -q, sin red)
 ```
 
 Necesitás Node ≥18 y Python ≥3.10. Autenticación con GitHub: o exportás `GITHUB_TOKEN`, o tenés
@@ -76,12 +76,21 @@ en el catálogo (ver arriba) para no descubrir en producción que algo solo se v
 - Iconos: usá `src/components/Icon` (SVG propio). Nada de emoji en la interfaz ni en
   `sidebar_label` de los docs — se corrigió a propósito, no lo reintroduzcas.
 - Los colores/tamaños viven en tokens CSS (`--kc-*`, `--ifm-*`) en `src/css/custom.css`, con un
-  bloque `:root` (claro, default) y un override `html[data-theme='dark']`. Si agregás un color
-  nuevo, definilo como token en ambos bloques, no lo hardcodees en un módulo CSS.
+  bloque `:root` (claro, default), un override `html[data-theme='dark']` y un bloque `@media print`
+  que fuerza la paleta clara (el papel es blanco aunque el tema sea oscuro). Si agregás un color
+  nuevo, definilo como token en los tres bloques, no lo hardcodees en un módulo CSS.
+- **Colores de estado reservados**: verde/ámbar/rojo (`--kc-green|amber|red`) significan
+  saludable/atención/crítico y nada más. Siempre acompañados de ícono + etiqueta o puntaje, nunca
+  el color solo. Magnitudes (conteos, heatmaps) usan la rampa secuencial `--kc-seq-1..4`; si la
+  cambiás, re-validala con el validador de la skill `dataviz` contra las superficies del sitio.
+- **Estado leído de la URL** (`?area=`, `?tabla=`): aplicalo **después de hidratar**
+  (`useIsBrowser` o un `useEffect`). El HTML estático se genera sin query string; si el primer
+  render del cliente ya aplica el filtro, React tira errores de hidratación (#418/#425) en
+  producción.
 
 ## Antes de un PR
 
-1. `npm run build` sin errores ni warnings nuevos.
+1. `pytest -q` en verde y `npm run build` sin errores ni warnings nuevos.
 2. Verificación con clic real (Playwright) del flujo que tocaste, en ambos temas.
 3. Si tocaste `scripts/aggregate.py`: corré `python scripts/aggregate.py` contra datos reales y
    revisá que el `catalog.json` resultante tenga sentido (no lo comitees con datos de prueba).

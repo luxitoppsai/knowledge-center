@@ -130,11 +130,16 @@ Esta es la pregunta que más se repite — la respuesta exacta, sin ambigüedad:
 | **Completitud de un modelo** (`33%`, `100%`...) | Modelo | Cuenta cuántos de `{model-card.md, lineage.md, functions.md}` existen en `docs/<nombre_modelo>/`, sobre 3. **No** depende de cuánto texto tengan — un archivo presente cuenta, esté completo o no. |
 | **Algoritmo / AUC / features / tablas de un modelo** | Modelo | Directo de `docs/<nombre_modelo>/model_data.json` (`models[0].algorithm_name`, la métrica `areaUnderROC`, `features.feature_count`, `sources.table_list`). |
 | **Narrativa de un modelo** (propósito / cómo funciona) | Modelo | Las secciones `## Propósito y uso previsto` / `## Cómo funciona` de `docs/<nombre_modelo>/model-card.md`. Si quedaron con el marcador `Por completar` de la skill de autodoc, el detalle no las muestra (no repite el placeholder). |
+| **Doc drift de un modelo** | Modelo | Fecha del último commit a `docs/<nombre_modelo>/model_data.json` vs. el último commit a `docs/<nombre_modelo>/model-card.md` (rama `develop`, si no la por defecto). Si la metadata es más nueva, hay drift y se reporta con los días de atraso. Por eso, **al reentrenar, regenera el Model Card** (`/generar-model-card`). |
+| **Salud de un modelo** (0–100) | Modelo | Documentación 50 (completitud × 0.5) + Frescura 30 (sin drift 30, drift ≤ 30 días 15, más o sin card 0) + Desempeño 10 (hay AUC) + Linaje 10 (hay `table_list`). Saludable ≥ 80, Atención 50–79, Crítico < 50. |
+| **Salud de un proyecto** | Proyecto | La del **peor** de sus modelos (un promedio escondería al modelo crítico). |
+| **Linaje global / impacto** (`/linaje`) | Portafolio | Cruza el `sources.table_list` de todos los modelos: una tabla "compartida" es la que aparece en modelos de más de un proyecto. |
 
 Si querés cambiar alguna de estas reglas (por ejemplo, derivar "Producción" de un label del repo en
 vez de releases), el lugar único para tocar es `scripts/aggregate.py` en este repo — está
 comentado y son funciones cortas y aisladas (`historial()`, `tiene_release()`, `extraer_resumen()`,
-`procesar_modelo()`).
+`procesar_modelo()`, `calcular_drift()`, `calcular_salud()`; pesos y umbrales en `PESOS_SALUD` y
+constantes vecinas).
 
 ## Probarlo localmente antes de esperar el build de CI
 
