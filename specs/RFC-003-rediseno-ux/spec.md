@@ -114,12 +114,12 @@ No. Todo es presentación determinista.
 
 ## 8. Criterios de aceptación
 
-- [ ] En la card y en el dashboard, verde, ámbar y rojo aparecen solo junto a indicadores de salud.
-- [ ] El primer pliegue del dashboard (1440 × 900) muestra "Requiere atención".
-- [ ] El buscador encuentra por nombre de modelo, y los filtros combinados sobreviven a una recarga
+- [x] En la card y en el dashboard, verde, ámbar y rojo aparecen solo junto a indicadores de salud.
+- [x] El primer pliegue del dashboard (1440 × 900) muestra "Requiere atención".
+- [x] El buscador encuentra por nombre de modelo, y los filtros combinados sobreviven a una recarga
       (URL).
-- [ ] El resumen del proyecto no contiene `##`, bloques de código ni texto de relleno.
-- [ ] El Model Card de `lgd_GLM_bestModel` muestra el aviso de drift (55 días).
-- [ ] La actividad del portafolio no contiene prefijos de commit (`chore:`, `feat(`, `docs(`).
-- [ ] Tests del agregador en verde; Playwright en producción en ambos temas y móvil, sin errores
+- [x] El resumen del proyecto no contiene `##`, bloques de código ni texto de relleno.
+- [x] El Model Card de `lgd_GLM_bestModel` muestra el aviso de drift (55 días).
+- [x] La actividad del portafolio no contiene prefijos de commit (`chore:`, `feat(`, `docs(`).
+- [x] Tests del agregador en verde; Playwright en producción en ambos temas y móvil, sin errores
       de consola.
