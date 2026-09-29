@@ -80,14 +80,6 @@ const paths = {
       <path d="m15 15 5 5" />
     </>
   ),
-  // Linaje global: grafo tablas → modelos
-  graph: (
-    <>
-      <circle cx="5.5" cy="6" r="2" /><circle cx="5.5" cy="18" r="2" />
-      <circle cx="18.5" cy="12" r="2" />
-      <path d="M7.5 6.4c5 .6 5 4.8 9 5.4M7.5 17.6c5-.6 5-4.8 9-5.4" />
-    </>
-  ),
   // Histórico: reloj
   clock: (
     <>

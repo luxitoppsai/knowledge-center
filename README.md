@@ -17,6 +17,8 @@ Nada se llena a mano: todo se deriva de lo que ya está en los repos (sin base d
 | ![Dashboard](static/img/readme/dashboard.png) | ![Linaje](static/img/readme/linaje.png) |
 | **Portafolio para comité** | **Salud y drift de un modelo** |
 | ![Portafolio](static/img/readme/portafolio.png) | ![Salud](static/img/readme/salud-drift.png) |
+| **Model Card con su ficha** | |
+| ![Model Card](static/img/readme/model-card.png) | |
 
 ## Demo en 90 segundos
 
@@ -99,11 +101,13 @@ knowledge-center/
     pages/index.js             # dashboard (landing) + "Requiere atención"
     pages/linaje.js            # linaje global + análisis de impacto
     pages/portafolio.js        # vista de portafolio para comité
-    lib/salud.js, lib/linaje.js  # lógica de presentación compartida (grafo, niveles de salud)
-    components/Salud/          # badge y bloque de salud (medidores, motivos, drift)
+    lib/                       # lógica de presentación compartida: salud, estado, linaje, eventos
+    components/Salud/          # badge y desglose de salud (medidores, motivos, drift)
+    components/FichaModelo/    # ficha arriba de cada documento de un modelo
+    components/EstadoTag/      # ciclo de vida en neutro (producción / desarrollo / nuevo)
     components/ProjectDetail/  # la página de detalle por proyecto
-    components/ProgressRing/   # anillo de completitud (SVG)
     components/Icon/           # set de iconos propio (sin librería)
+    theme/DocItem/Content/     # wrap del tema: inserta la ficha sin tocar el markdown
     css/custom.css             # tokens de diseño (claro/oscuro/impresión), estados, rampa secuencial
     data/catalog.json          # versionado con placeholder vacío; el build real lo sobreescribe
   docs/intro.md                # única página de docs versionada — el resto (docs/<slug>/*) es

@@ -62,10 +62,11 @@ const config = {
         title: 'Knowledge Center',
         logo: {alt: 'KC', src: 'img/logo.svg'},
         items: [
-          {to: '/', label: 'Dashboard', position: 'left'},
+          // '/' coincide como prefijo con todo: sin regex exacta, "Dashboard" queda activo en cada página
+          {to: '/', label: 'Dashboard', position: 'left', activeBaseRegex: '^/knowledge-center/?$'},
           {to: '/portafolio', label: 'Portafolio', position: 'left'},
           {to: '/linaje', label: 'Linaje', position: 'left'},
-          {to: '/docs/intro', label: 'Documentación', position: 'left'},
+          {to: '/docs/intro', label: 'Documentación', position: 'left', activeBasePath: 'docs'},
         ],
       },
       footer: {

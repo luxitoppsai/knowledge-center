@@ -59,6 +59,26 @@ const { chromium } = require('playwright');
 })();
 ```
 
+**Suite E2E lista para usar** (`tests/e2e/`, Playwright con clics reales en tema claro, oscuro y
+móvil, y falla ante cualquier error de consola). Necesita el catálogo real agregado
+(`python scripts/aggregate.py`), porque los esperados salen de `src/data/catalog.json`:
+
+```bash
+npm run build && npm run serve -- --port 3210 &
+for s in tests/e2e/verify_*.py; do
+  uv run --with playwright python "$s" http://localhost:3210/knowledge-center /tmp/kc-e2e || break
+done
+# en producción: mismo loop con https://luxitoppsai.github.io/knowledge-center
+```
+
+| Script | Qué protege |
+| --- | --- |
+| `verify_rfc003.py` | Colores de salud solo en indicadores de salud, "Requiere atención" en el primer pliegue, filtros en la URL, acordeón del detalle, actividad legible |
+| `verify_rfc004.py` | Ficha del Model Card (con drift), footer, navbar, "+N", detalle sin redundancia, zonas táctiles ≥ 44 px |
+| `verify_linaje.py` | Grafo, panel de impacto, buscador, teclado, llegada desde el detalle, lista en móvil |
+| `verify_portafolio.py` | KPIs coherentes con el dashboard, matriz → dashboard filtrado, impresión a PDF |
+| `verify_navbar.py` | Un solo item activo, el correcto, en cada tipo de página |
+
 Antes de dar por bueno un cambio de UI: probalo en **ambos temas** (claro/oscuro —
 `localStorage.setItem('theme','light')` + reload) y, si tocaste layout, con **más de 3 proyectos**
 en el catálogo (ver arriba) para no descubrir en producción que algo solo se ve bien con pocos ítems.

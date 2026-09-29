@@ -45,6 +45,14 @@ function layout(grafo) {
   return {alto, yTabla, yModelo, grupos};
 }
 
+function plural(n, uno, varios) {
+  return `${n} ${n === 1 ? uno : varios}`;
+}
+
+function dependientes(t) {
+  return `${plural(t.modelos.length, 'modelo', 'modelos')} · ${plural(t.proyectos.length, 'proyecto', 'proyectos')}`;
+}
+
 function curva(y1, y2) {
   const mx = (TABLA_X1 + MODELO_X0) / 2;
   return `M${TABLA_X1},${y1} C${mx},${y1} ${mx},${y2} ${MODELO_X0},${y2}`;
@@ -180,7 +188,7 @@ function Impacto({grafo, sel, onSel}) {
                 {nombreCorto(t.id)}
               </button>
               <span className={styles.meta}>
-                {t.modelos.length} modelos · {t.proyectos.length} proyectos
+                {dependientes(t)}
               </span>
             </li>
           ))}
@@ -255,7 +263,7 @@ function ListaMovil({grafo, onSel}) {
           <button className={styles.linkBtn} onClick={() => onSel({tipo: 'tabla', id: t.id})}>
             {nombreCorto(t.id)}
           </button>
-          <span className={styles.meta}>{t.modelos.length} modelos · {t.proyectos.length} proyectos</span>
+          <span className={styles.meta}>{dependientes(t)}</span>
         </li>
       ))}
     </ul>
@@ -294,6 +302,7 @@ export default function Linaje() {
     ? grafo.tablas.filter((t) => t.id.toLowerCase().includes(busqueda.trim().toLowerCase())).slice(0, 6)
     : [];
   const activo = vecinos(grafo, hover || sel);
+  const sinLinaje = grafo.modelos.filter((m) => m.tablas.length === 0);
 
   return (
     <Layout title="Linaje" description="Linaje global: qué modelos dependen de cada tabla">
@@ -306,6 +315,13 @@ export default function Linaje() {
             {grafo.tablas.length} tablas fuente alimentan {grafo.modelos.length} modelos.{' '}
             {grafo.compartidas} {grafo.compartidas === 1 ? 'tabla es compartida' : 'tablas son compartidas'} entre
             proyectos: un cambio ahí impacta a más de un equipo.
+            {sinLinaje.length > 0 && (
+              <>
+                {' '}{sinLinaje.length === 1 ? 'Un modelo no declara' : `${sinLinaje.length} modelos no declaran`}{' '}
+                tablas fuente todavía, por eso aparece sin conexiones:{' '}
+                {sinLinaje.map((m) => m.nombre).join(', ')}.
+              </>
+            )}
           </p>
           <form
             className={styles.buscador}

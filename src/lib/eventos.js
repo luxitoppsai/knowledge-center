@@ -18,6 +18,7 @@ export function describirEvento(e) {
   const [, tipo, alcance, texto] = m;
   if (/repo inicial/i.test(texto)) return 'Proyecto creado';
   if (/reentrenamiento/i.test(texto)) return alcance ? `Reentrenamiento de ${alcance}` : 'Reentrenamiento';
+  if (/model card regenerado/i.test(texto)) return alcance ? `Model Card de ${alcance} regenerado` : 'Model Card regenerado';
   if (tipo === 'docs') return alcance ? `Documentación de ${alcance} actualizada` : 'Documentación actualizada';
   if (tipo === 'fix') return `Corrección${alcance ? ` en ${alcance}` : ''}: ${texto}`;
   return capitalizar(texto);

@@ -1,0 +1,15 @@
+/* hijo del flex column de Docusaurus: sin margin:auto aquí; centrado en .inner */
+.page { padding: 5rem 1rem 6rem; }
+.inner { max-width: 640px; margin: 0 auto; }
+.eyebrow {
+  font-family: var(--ifm-font-family-monospace); letter-spacing: 0.2em; text-transform: uppercase;
+  font-size: 0.72rem; color: var(--kc-muted); margin: 0 0 0.5rem;
+}
+.titulo { font-size: clamp(1.8rem, 4vw, 2.4rem); letter-spacing: -0.02em; margin: 0 0 0.8rem; }
+.texto { color: var(--kc-muted); margin: 0 0 1.6rem; line-height: 1.6; }
+.links { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; align-items: center; }
+.principal {
+  border: 1px solid var(--kc-cyan); border-radius: var(--kc-radius-md);
+  padding: 0.5rem 1rem; font-weight: 600;
+}
+.principal:hover { background: var(--kc-chip-bg); text-decoration: none; }
